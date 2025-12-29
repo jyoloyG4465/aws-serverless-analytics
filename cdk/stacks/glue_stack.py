@@ -87,6 +87,8 @@ class GlueStack(Stack):
                 "--job-language": "python",
                 "--enable-metrics": "true",
                 "--enable-continuous-cloudwatch-log": "true",
+                # 外部Pythonライブラリの指定
+                "--additional-python-modules": "pandas==2.0.3,pyarrow==12.0.1",
             },
             max_capacity=1.0,  # 1 DPU（最小）
             timeout=10,  # 10分

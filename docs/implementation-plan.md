@@ -342,32 +342,55 @@ REST API:
 #### 3.1 Glueジョブ (`glue_jobs/process_youtube_history.py`) 🔥
 
 **処理フロー**（**user_id対応**）:
-1. 引数からINPUT_PATHとuser_idを取得
+1. 引数からINPUT_PATH、OUTPUT_PATH、user_idを取得
 2. S3からJSONファイル読み込み（`s3://bucket/raw/{user_id}/{filename}.json`）
-3. YouTubeデータパース（title, video_id, channel_name, watched_at抽出）
-4. タイムスタンプからパーティション情報（year, month, day）抽出
+3. **広告レコードを除外**:
+   - `details` に `"Google 広告から"` が含まれるレコードをフィルタ
+4. YouTubeデータパース:
+   - `video_title`: タイトルから「〇〇 を視聴しました」の部分を抽出
+   - `video_id`: titleUrlから11文字の動画IDを抽出
+   - `channel_name`: subtitles[0].nameから取得
+   - `channel_id`: subtitles[0].urlからチャンネルIDを抽出
+   - `watched_at`: timeをタイムスタンプに変換
 5. Pandas DataFrameに変換
-6. **user_idをパーティションに含めて**Parquet形式で保存（Snappy圧縮）
-7. 出力先: `s3://bucket/processed/{user_id}/year={YYYY}/month={MM}/day={DD}/data.parquet`
+6. **user_idパーティションのみで**Parquet形式で保存（Snappy圧縮）
+7. 出力先: `s3://bucket/processed/{user_id}/data.parquet`
+   - **注意**: 日付パーティションなし（シンプル化）
 
 **YouTube履歴JSONスキーマ**（Google Takeout形式）:
 ```json
 [
   {
-    "title": "ビデオタイトル",
-    "titleUrl": "https://www.youtube.com/watch?v=VIDEO_ID",
-    "time": "2025-12-27T10:30:00.000Z",
-    "subtitles": [
-      {
-        "name": "チャンネル名",
-        "url": "https://www.youtube.com/channel/CHANNEL_ID"
-      }
-    ]
+    "header": "YouTube",
+    "title": "鈴木誠也「メジャー移籍から4年間のホームラン数は大谷に次ぐ日本人2位です」←これwww【ネット反応集】 を視聴しました",
+    "titleUrl": "https://www.youtube.com/watch?v=HoASJiuVNhk",
+    "subtitles": [{
+      "name": "野球馬鹿チャンネル【ネット反応集】",
+      "url": "https://www.youtube.com/channel/UCGtCj48DUKCTbaZdqOIpaJA"
+    }],
+    "time": "2025-12-27T10:26:59.596Z",
+    "products": ["YouTube"],
+    "activityControls": ["YouTube の再生履歴"]
+  },
+  {
+    "header": "YouTube",
+    "title": "YouTube のトップページで広告を視聴しました",
+    "time": "2025-12-27T10:28:25.686Z",
+    "products": ["YouTube"],
+    "details": [{
+      "name": "Google 広告から"
+    }],
+    "activityControls": ["ウェブとアプリのアクティビティ", "YouTube の再生履歴"]
   }
 ]
 ```
 
-**依存ライブラリ**: pandas, pyarrow (S3にアップロード、Glueジョブで参照)
+**広告の判定基準**:
+- `details` 配列に `{"name": "Google 広告から"}` が含まれる場合は広告と判定し、除外する
+
+**依存ライブラリ**:
+- pandas, pyarrow (Glueジョブの `--additional-python-modules` パラメータで指定)
+- boto3 (Glue Python Shell に標準で含まれる)
 
 #### 3.2 Lambda trigger-glue (`lambdas/trigger_glue/handler.py`) 🔥
 
