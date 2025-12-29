@@ -10,14 +10,14 @@ YouTube閲覧履歴（JSON）をAWSで分析し、Bedrockを使ったチャッ�
 - JSONファイルアップロード → 自動データ加工（Glue Python Shell）
 - Athenaでのデータクエリ（ユーザー自身のデータのみアクセス）
 - Bedrockチャット（Claude 3.5 Sonnet）によるAI分析
-- **期間限定保存**（30日後に自動削除、デモ・検証用）
+- **期間限定保存**（2日後に自動削除、検証用）
 
 **コスト最適化優先**：個人利用・デモ用として月額$3-5程度を想定
 
 **データ管理ポリシー**:
 - ユーザーごとにS3パスを分離（`s3://bucket/{user-id}/`）
 - 各ユーザーは自分のデータのみアクセス可能（Cognito User IDで制御）
-- アップロード後30日で自動削除（S3ライフサイクルポリシー）
+- アップロード後2日で自動削除（S3ライフサイクルポリシー）
 - デモ・検証用途でシンプルな構成
 
 ## システムアーキテクチャ
@@ -147,7 +147,7 @@ aws-serverless-analytics/
 1. **raw-data-bucket**: JSONファイルアップロード先
    - パス構造: `s3://bucket/raw/{user-id}/{filename}.json`
    - バージョニング: 無効（デモ用）
-   - **ライフサイクル: 30日後に全データ自動削除**
+   - **ライフサイクル: 2日後に全データ自動削除**
    - S3イベント通知設定（Lambda trigger起動）
    - 例: `s3://raw-bucket/raw/user-abc123/watch-history.json`
 
@@ -155,18 +155,18 @@ aws-serverless-analytics/
    - パス構造: `s3://bucket/processed/{user-id}/year=YYYY/month=MM/day=DD/data.parquet`
    - パーティション: ユーザーID + 日付
    - 圧縮: Snappy
-   - **ライフサイクル: 30日後に全データ自動削除**
+   - **ライフサイクル: 2日後に全データ自動削除**
    - 例: `s3://processed-bucket/processed/user-abc123/year=2025/month=01/day=15/data.parquet`
 
 3. **athena-results-bucket**: Athenaクエリ結果
    - パス構造: `s3://bucket/results/{user-id}/`
-   - **ライフサイクル: 7日後削除**（コスト削減）
+   - **ライフサイクル: 2日後削除**（検証用）
 
 **重要な設計判断**:
 - 各ユーザーのデータは完全に分離されたパスに保存
 - Lambda関数でCognito User IDを取得してパス生成
 - Athenaクエリ時も`user_id`でフィルタリング
-- 30日間の期間限定保存でストレージコスト削減
+- 2日間の期間限定保存でストレージコスト削減（検証用）
 
 #### 2.2 Glue Python Shellジョブ (`cdk/stacks/glue_stack.py`)
 
@@ -679,8 +679,8 @@ aws cognito-idp admin-create-user \
 3. **S3アクセス**: バケットポリシーでパブリックアクセスブロック
    - 直接S3アクセスは不可
 
-4. **期間限定**: 30日後に全データ自動削除
-   - デモ・検証用途に最適
+4. **期間限定**: 2日後に全データ自動削除
+   - 検証用途に最適
 
 ## コスト最適化ポイント
 
@@ -719,7 +719,7 @@ aws cognito-idp admin-create-user \
 6. **環境変数**: シークレット情報は環境変数で管理（.envファイルは.gitignore）
 7. **CORS設定**: Amplifyドメインのみ許可
 8. **セルフサインアップ無効**: 管理者のみがユーザー作成可能
-9. **期間限定保存**: 30日後に自動削除でデータ漏洩リスク最小化
+9. **期間限定保存**: 2日後に自動削除でデータ漏洩リスク最小化（検証用）
 
 ## モニタリング・ログ
 
