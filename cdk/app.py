@@ -5,6 +5,7 @@ from stacks.storage_stack import StorageStack
 from stacks.glue_stack import GlueStack
 from stacks.athena_stack import AthenaStack
 from stacks.lambda_stack import LambdaStack
+from stacks.cognito_stack import CognitoStack
 
 
 app = cdk.App()
@@ -61,5 +62,13 @@ lambda_stack = LambdaStack(
 lambda_stack.add_dependency(storage_stack)
 lambda_stack.add_dependency(glue_stack)
 lambda_stack.add_dependency(athena_stack)
+
+# Cognito Stack (ユーザー認証)
+cognito_stack = CognitoStack(
+    app,
+    "YoutubeAnalyticsCognitoStack",
+    env=env,
+    description="Cognito user pool for authentication"
+)
 
 app.synth()
