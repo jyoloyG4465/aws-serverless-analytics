@@ -136,15 +136,16 @@ aws-serverless-analytics/
 1. ✅ **Phase 3.1**: Glueジョブ実装（JSON → Parquet変換）
 2. ✅ **Phase 3.2**: Lambda trigger-glue実装（S3イベントでGlue起動）
 3. ✅ **Phase 4.4**: Lambda upload-presigned実装（署名付きURL生成）
-4. **Phase 5.1**: Next.jsプロジェクト初期化
-5. **Phase 5.2**: Cognito認証設定
-6. **Phase 5.3**: ログインフォーム作成
-7. **Phase 5.4**: 認証ガード作成
-8. **Phase 5.5**: ファイルアップロードコンポーネント作成
-9. **Phase 6.1**: CDKデプロイ実行
-10. **Phase 6.2**: Cognitoユーザー作成
-11. **Phase 6.3**: フロントエンドデプロイ
-12. **Phase 6.4**: 基本動作テスト（アップロード→Glue→Athenaテーブル確認）
+4. ✅ **Phase 5.1**: Next.jsプロジェクト初期化
+5. ✅ **Phase 5.2**: Cognito認証設定
+6. ✅ **Phase 5.3**: ログインフォーム作成
+7. ✅ **Phase 5.4**: 認証ガード作成
+8. ✅ **Phase 5.5**: ファイルアップロードコンポーネント作成
+9. ✅ **Phase 5.7**: ページ構成（login, home）
+10. **Phase 6.1**: CDKデプロイ実行
+11. **Phase 6.2**: Cognitoユーザー作成
+12. **Phase 6.3**: フロントエンドデプロイ
+13. **Phase 6.4**: 基本動作テスト（アップロード→Glue→Athenaテーブル確認）
 
 ### 🔄 後回し（AI/チャット機能）
 
@@ -504,9 +505,9 @@ def get_query(question, user_id):
 
 #### 4.4 Upload Presigned Lambda (`lambdas/upload_presigned/handler.py`) ✅
 
-### Phase 5: フロントエンド実装 🔥 優先
+### Phase 5: フロントエンド実装 ✅
 
-#### 5.1 Next.jsプロジェクト初期化 (`frontend/`) 🔥
+#### 5.1 Next.jsプロジェクト初期化 (`frontend/`) ✅
 
 ```bash
 npx create-next-app@latest . --typescript --tailwind --app
@@ -518,7 +519,7 @@ npm install axios @aws-amplify/auth aws-amplify
 - `@aws-amplify/auth`: Cognito認証
 - `aws-amplify`: Amplify設定
 
-#### 5.2 Cognito認証設定 (`frontend/src/lib/auth.ts`) 🔥
+#### 5.2 Cognito認証設定 (`frontend/src/lib/auth.ts`) ✅
 
 AWS Amplify設定:
 ```typescript
@@ -544,7 +545,7 @@ export { signIn, signOut, getCurrentUser, fetchAuthSession };
 - `getIdToken()`: API呼び出し用のIDトークン取得
 - `isAuthenticated()`: 認証状態チェック
 
-#### 5.3 ログインフォーム (`frontend/src/components/LoginForm.tsx`) 🔥
+#### 5.3 ログインフォーム (`frontend/src/components/LoginForm.tsx`) ✅
 
 機能:
 - Email/パスワード入力
@@ -565,7 +566,7 @@ export default function LoginForm() {
 }
 ```
 
-#### 5.4 認証ガード (`frontend/src/components/AuthGuard.tsx`) 🔥
+#### 5.4 認証ガード (`frontend/src/components/AuthGuard.tsx`) ✅
 
 機能:
 - ページアクセス時に認証状態をチェック
@@ -586,7 +587,7 @@ export default function AuthGuard({ children }) {
 
 ホーム画面とチャット画面を `<AuthGuard>` でラップ
 
-#### 5.5 ファイルアップロード (`frontend/src/components/FileUpload.tsx`) 🔥
+#### 5.5 ファイルアップロード (`frontend/src/components/FileUpload.tsx`) ✅
 
 機能:
 - JSONファイル選択
@@ -617,7 +618,7 @@ const { data } = await axios.get(
 
 API呼び出し時も同様に認証トークンをヘッダーに付与
 
-#### 5.7 ページ構成 🔥
+#### 5.7 ページ構成 ✅
 
 - `/login` (page.tsx): ログイン画面 - Cognito認証
 - `/` (page.tsx): ホーム画面 - ファイルアップロード（認証必須）
