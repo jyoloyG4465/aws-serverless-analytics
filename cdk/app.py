@@ -15,7 +15,7 @@ app = cdk.App()
 # 環境設定
 env = cdk.Environment(
     account=os.getenv('CDK_DEFAULT_ACCOUNT'),
-    region=os.getenv('CDK_DEFAULT_REGION', 'us-east-1')
+    region=os.getenv('CDK_DEFAULT_REGION', 'ap-northeast-1')
 )
 
 # Storage Stack (S3バケット)
@@ -61,9 +61,8 @@ lambda_stack = LambdaStack(
     env=env,
     description="Lambda functions for data pipeline"
 )
-lambda_stack.add_dependency(storage_stack)
-lambda_stack.add_dependency(glue_stack)
-lambda_stack.add_dependency(athena_stack)
+# CDKは自動的にコンストラクタ引数から依存関係を検出するため、
+# 明示的なadd_dependency()は不要（循環依存を回避）
 
 # Cognito Stack (ユーザー認証)
 cognito_stack = CognitoStack(

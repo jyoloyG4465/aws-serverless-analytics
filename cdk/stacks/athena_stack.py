@@ -1,5 +1,6 @@
 from aws_cdk import (
     Stack,
+    RemovalPolicy,
     aws_athena as athena,
     aws_glue as glue,
     aws_s3 as s3,
@@ -33,6 +34,8 @@ class AthenaStack(Stack):
                 description="YouTube watch history analytics database",
             ),
         )
+        # スタック削除時にデータベースも削除
+        self.database.apply_removal_policy(RemovalPolicy.DESTROY)
 
         # Athenaワークグループ
         self.workgroup = athena.CfnWorkGroup(
@@ -54,6 +57,8 @@ class AthenaStack(Stack):
                 ),
             ),
         )
+        # スタック削除時にワークグループも削除
+        self.workgroup.apply_removal_policy(RemovalPolicy.DESTROY)
 
         # YouTube閲覧履歴テーブル定義（user_idパーティションのみ）
         self.table = glue.CfnTable(
@@ -124,3 +129,5 @@ class AthenaStack(Stack):
 
         # テーブルはデータベースに依存
         self.table.add_dependency(self.database)
+        # スタック削除時にテーブルも削除
+        self.table.apply_removal_policy(RemovalPolicy.DESTROY)

@@ -1,5 +1,6 @@
 from aws_cdk import (
     Stack,
+    RemovalPolicy,
     aws_amplify as amplify,
     CfnOutput,
 )
@@ -90,6 +91,8 @@ class AmplifyStack(Stack):
             # プラットフォーム
             platform="WEB_COMPUTE",
         )
+        # スタック削除時にAmplifyアプリも削除
+        self.amplify_app.apply_removal_policy(RemovalPolicy.DESTROY)
 
         # mainブランチ設定
         self.main_branch = amplify.CfnBranch(
@@ -100,6 +103,8 @@ class AmplifyStack(Stack):
             stage="PRODUCTION",
             enable_auto_build=True,
         )
+        # スタック削除時にブランチも削除
+        self.main_branch.apply_removal_policy(RemovalPolicy.DESTROY)
 
         # 出力
         CfnOutput(

@@ -4,7 +4,8 @@ from aws_cdk import (
     aws_iam as iam,
     aws_s3 as s3,
     aws_glue as glue,
-    aws_s3_notifications as s3n,
+    aws_events as events,
+    aws_events_targets as targets,
     Duration,
 )
 from constructs import Construct
@@ -62,12 +63,21 @@ class LambdaStack(Stack):
         # S3読み取り権限
         raw_bucket.grant_read(self.trigger_glue_function)
 
-        # S3イベント通知設定（JSONファイルアップロード時にトリガー）
-        raw_bucket.add_event_notification(
-            s3.EventType.OBJECT_CREATED,
-            s3n.LambdaDestination(self.trigger_glue_function),
-            s3.NotificationKeyFilter(suffix=".json"),
+        # EventBridgeルールでS3イベントを検知してLambdaをトリガー（循環依存回避）
+        s3_event_rule = events.Rule(
+            self,
+            "S3JsonObjectCreatedRule",
+            description="Trigger Glue job when JSON file is uploaded to S3",
+            event_pattern=events.EventPattern(
+                source=["aws.s3"],
+                detail_type=["Object Created"],
+                detail={
+                    "bucket": {"name": [raw_bucket.bucket_name]},
+                    "object": {"key": [{"suffix": ".json"}]},
+                },
+            ),
         )
+        s3_event_rule.add_target(targets.LambdaFunction(self.trigger_glue_function))
 
         # 2. Chat API Lambda関数
         self.chat_api_function = lambda_.Function(
@@ -84,7 +94,7 @@ class LambdaStack(Stack):
                 "ATHENA_WORKGROUP": workgroup_name,
                 "ATHENA_OUTPUT_BUCKET": athena_results_bucket.bucket_name,
                 "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20241022-v2:0",
-                "BEDROCK_REGION": "us-east-1",
+                "BEDROCK_REGION": self.region,
             },
             description="Chat API with Athena and Bedrock integration",
         )
@@ -129,7 +139,7 @@ class LambdaStack(Stack):
             iam.PolicyStatement(
                 actions=["bedrock:InvokeModel"],
                 resources=[
-                    f"arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+                    f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
                 ],
             )
         )

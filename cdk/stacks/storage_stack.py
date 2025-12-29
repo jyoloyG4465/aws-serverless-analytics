@@ -29,6 +29,7 @@ class StorageStack(Stack):
             enforce_ssl=True,
             removal_policy=RemovalPolicy.DESTROY,  # 開発環境用：スタック削除時にバケットも削除
             auto_delete_objects=True,  # 開発環境用：バケット削除時にオブジェクトも削除
+            event_bridge_enabled=True,  # EventBridge通知を有効化（循環依存回避）
             lifecycle_rules=[
                 s3.LifecycleRule(
                     id="DeleteAfter2Days",
