@@ -133,9 +133,9 @@ aws-serverless-analytics/
 
 **目的**: ファイルアップロード → Glue加工 → Athena までの基本パイプラインを完成させる
 
-1. **Phase 3.1**: Glueジョブ実装（JSON → Parquet変換）
-2. **Phase 3.2**: Lambda trigger-glue実装（S3イベントでGlue起動）
-3. **Phase 4.4**: Lambda upload-presigned実装（署名付きURL生成）
+1. ✅ **Phase 3.1**: Glueジョブ実装（JSON → Parquet変換）
+2. ✅ **Phase 3.2**: Lambda trigger-glue実装（S3イベントでGlue起動）
+3. ✅ **Phase 4.4**: Lambda upload-presigned実装（署名付きURL生成）
 4. **Phase 5.1**: Next.jsプロジェクト初期化
 5. **Phase 5.2**: Cognito認証設定
 6. **Phase 5.3**: ログインフォーム作成
@@ -339,7 +339,7 @@ REST API:
 
 ### Phase 3: データ処理パイプライン実装 🔥 優先
 
-#### 3.1 Glueジョブ (`glue_jobs/process_youtube_history.py`) 🔥
+#### 3.1 Glueジョブ (`glue_jobs/process_youtube_history.py`) ✅
 
 **処理フロー**（**user_id対応**）:
 1. 引数からINPUT_PATH、OUTPUT_PATH、user_idを取得
@@ -392,7 +392,7 @@ REST API:
 - pandas, pyarrow (Glueジョブの `--additional-python-modules` パラメータで指定)
 - boto3 (Glue Python Shell に標準で含まれる)
 
-#### 3.2 Lambda trigger-glue (`lambdas/trigger_glue/handler.py`) 🔥
+#### 3.2 Lambda trigger-glue (`lambdas/trigger_glue/handler.py`) ✅
 
 ```python
 import boto3
@@ -502,9 +502,7 @@ def get_query(question, user_id):
         """
 ```
 
-#### 4.4 Upload Presigned Lambda (`lambdas/upload_presigned/handler.py`) 🔥
-
-**後述: Phase 4.4 は優先実装（ファイルアップロード機能に必要）**
+#### 4.4 Upload Presigned Lambda (`lambdas/upload_presigned/handler.py`) ✅
 
 ### Phase 5: フロントエンド実装 🔥 優先
 
