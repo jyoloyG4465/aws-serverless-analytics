@@ -127,9 +127,38 @@ aws-serverless-analytics/
     └── deployment.md               # デプロイ手順
 ```
 
+## 実装の優先順位
+
+### 🔥 優先実装（データパイプライン構築）
+
+**目的**: ファイルアップロード → Glue加工 → Athena までの基本パイプラインを完成させる
+
+1. **Phase 3.1**: Glueジョブ実装（JSON → Parquet変換）
+2. **Phase 3.2**: Lambda trigger-glue実装（S3イベントでGlue起動）
+3. **Phase 4.4**: Lambda upload-presigned実装（署名付きURL生成）
+4. **Phase 5.1**: Next.jsプロジェクト初期化
+5. **Phase 5.2**: Cognito認証設定
+6. **Phase 5.3**: ログインフォーム作成
+7. **Phase 5.4**: 認証ガード作成
+8. **Phase 5.5**: ファイルアップロードコンポーネント作成
+9. **Phase 6.1**: CDKデプロイ実行
+10. **Phase 6.2**: Cognitoユーザー作成
+11. **Phase 6.3**: フロントエンドデプロイ
+12. **Phase 6.4**: 基本動作テスト（アップロード→Glue→Athenaテーブル確認）
+
+### 🔄 後回し（AI/チャット機能）
+
+**目的**: データパイプライン完成後に実装
+
+- **Phase 4.1**: 共通ライブラリ - Athenaクライアント実装
+- **Phase 4.2**: 共通ライブラリ - Bedrockクライアント実装
+- **Phase 4.3**: Lambda chat-api実装（Athena + Bedrock統合）
+- **Phase 5.6**: チャットインターフェースコンポーネント作成
+- **Phase 5.7**: チャットページ構成
+
 ## 実装ステップ
 
-### Phase 1: プロジェクト初期化
+### Phase 1: プロジェクト初期化 ✅
 
 **ファイル**: プロジェクトルート
 
@@ -138,9 +167,9 @@ aws-serverless-analytics/
 3. `.env.example` 作成（AWS_REGION, AWS_ACCOUNT_ID など）
 4. `README.md` 更新
 
-### Phase 2: AWS CDK インフラストラクチャ構築
+### Phase 2: AWS CDK インフラストラクチャ構築 ✅
 
-#### 2.1 S3バケット (`cdk/stacks/storage_stack.py`)
+#### 2.1 S3バケット (`cdk/stacks/storage_stack.py`) ✅
 
 3つのバケットを作成（**ユーザーごとのパス分離**）：
 
@@ -168,7 +197,7 @@ aws-serverless-analytics/
 - Athenaクエリ時も`user_id`でフィルタリング
 - 2日間の期間限定保存でストレージコスト削減（検証用）
 
-#### 2.2 Glue Python Shellジョブ (`cdk/stacks/glue_stack.py`)
+#### 2.2 Glue Python Shellジョブ (`cdk/stacks/glue_stack.py`) ✅
 
 **重要な選択**: Glue Python Shellを使用（PySpark不使用）
 - 理由: データ量が少量（数MB〜数十MB）のため、Python Shellの方がコスト効率が良い
@@ -189,7 +218,7 @@ glue.CfnJob(
 )
 ```
 
-#### 2.3 Athenaワークグループ (`cdk/stacks/athena_stack.py`)
+#### 2.3 Athenaワークグループ (`cdk/stacks/athena_stack.py`) ✅
 
 - データベース: `youtube_analytics_db`
 - テーブル: `youtube_watch_history`
@@ -238,7 +267,7 @@ ORDER BY watch_count DESC
 LIMIT 10;
 ```
 
-#### 2.4 Lambda関数 (`cdk/stacks/lambda_stack.py`)
+#### 2.4 Lambda関数 (`cdk/stacks/lambda_stack.py`) ✅
 
 3つのLambda関数（**全てCognito User ID対応**）：
 
@@ -269,7 +298,7 @@ def get_user_id(event):
     return user_id
 ```
 
-#### 2.5 Cognito ユーザープール (`cdk/stacks/cognito_stack.py`)
+#### 2.5 Cognito ユーザープール (`cdk/stacks/cognito_stack.py`) ✅
 
 **新規追加**: AWS Cognito による認証
 
@@ -287,7 +316,7 @@ def get_user_id(event):
 Amplify連携:
 - ユーザープールID、クライアントIDをAmplify環境変数に設定
 
-#### 2.6 API Gateway (`cdk/stacks/api_stack.py`)
+#### 2.6 API Gateway (`cdk/stacks/api_stack.py`) ✅
 
 REST API:
 - `/upload-url` (GET) → upload-presigned Lambda
@@ -298,7 +327,7 @@ REST API:
 - 全エンドポイントでCognitoトークン検証必須
 - 未認証リクエストは401エラー
 
-#### 2.7 Amplify Hosting (`cdk/stacks/amplify_stack.py`)
+#### 2.7 Amplify Hosting (`cdk/stacks/amplify_stack.py`) ✅
 
 - GitHub連携
 - 自動ビルド・デプロイ
@@ -308,9 +337,9 @@ REST API:
   - `NEXT_PUBLIC_COGNITO_CLIENT_ID`: CognitoクライアントID
   - `NEXT_PUBLIC_AWS_REGION`: AWSリージョン
 
-### Phase 3: データ処理パイプライン実装
+### Phase 3: データ処理パイプライン実装 🔥 優先
 
-#### 3.1 Glueジョブ (`glue_jobs/process_youtube_history.py`)
+#### 3.1 Glueジョブ (`glue_jobs/process_youtube_history.py`) 🔥
 
 **処理フロー**（**user_id対応**）:
 1. 引数からINPUT_PATHとuser_idを取得
@@ -340,7 +369,7 @@ REST API:
 
 **依存ライブラリ**: pandas, pyarrow (S3にアップロード、Glueジョブで参照)
 
-#### 3.2 Lambda trigger-glue (`lambdas/trigger_glue/handler.py`)
+#### 3.2 Lambda trigger-glue (`lambdas/trigger_glue/handler.py`) 🔥
 
 ```python
 import boto3
@@ -382,9 +411,9 @@ def lambda_handler(event, context):
     return {'statusCode': 200}
 ```
 
-### Phase 4: チャットAPI実装
+### Phase 4: Lambda関数実装
 
-#### 4.1 Athenaクライアント (`lambdas/shared/athena_client.py`)
+#### 4.1 Athenaクライアント (`lambdas/shared/athena_client.py`) 🔄 後回し
 
 機能:
 - クエリ実行・結果取得
@@ -392,14 +421,14 @@ def lambda_handler(event, context):
 - タイムアウト処理
 - エラーハンドリング
 
-#### 4.2 Bedrockクライアント (`lambdas/shared/bedrock_client.py`)
+#### 4.2 Bedrockクライアント (`lambdas/shared/bedrock_client.py`) 🔄 後回し
 
 - モデル: Claude 3.5 Sonnet (`anthropic.claude-3-5-sonnet-20241022-v2:0`)
 - リージョン: us-east-1（Bedrockが利用可能なリージョン）
 - max_tokens: 2000（コスト最適化）
 - temperature: 0.7
 
-#### 4.3 チャットAPI Lambda (`lambdas/chat_api/handler.py`)
+#### 4.3 チャットAPI Lambda (`lambdas/chat_api/handler.py`) 🔄 後回し
 
 **処理フロー** (シンプルなキーワードマッチ方式 + **user_id フィルタリング**):
 
@@ -450,9 +479,13 @@ def get_query(question, user_id):
         """
 ```
 
-### Phase 5: フロントエンド実装
+#### 4.4 Upload Presigned Lambda (`lambdas/upload_presigned/handler.py`) 🔥
 
-#### 5.1 Next.jsプロジェクト初期化 (`frontend/`)
+**後述: Phase 4.4 は優先実装（ファイルアップロード機能に必要）**
+
+### Phase 5: フロントエンド実装 🔥 優先
+
+#### 5.1 Next.jsプロジェクト初期化 (`frontend/`) 🔥
 
 ```bash
 npx create-next-app@latest . --typescript --tailwind --app
@@ -464,7 +497,7 @@ npm install axios @aws-amplify/auth aws-amplify
 - `@aws-amplify/auth`: Cognito認証
 - `aws-amplify`: Amplify設定
 
-#### 5.2 Cognito認証設定 (`frontend/src/lib/auth.ts`)
+#### 5.2 Cognito認証設定 (`frontend/src/lib/auth.ts`) 🔥
 
 AWS Amplify設定:
 ```typescript
@@ -490,7 +523,7 @@ export { signIn, signOut, getCurrentUser, fetchAuthSession };
 - `getIdToken()`: API呼び出し用のIDトークン取得
 - `isAuthenticated()`: 認証状態チェック
 
-#### 5.3 ログインフォーム (`frontend/src/components/LoginForm.tsx`)
+#### 5.3 ログインフォーム (`frontend/src/components/LoginForm.tsx`) 🔥
 
 機能:
 - Email/パスワード入力
@@ -511,7 +544,7 @@ export default function LoginForm() {
 }
 ```
 
-#### 5.4 認証ガード (`frontend/src/components/AuthGuard.tsx`)
+#### 5.4 認証ガード (`frontend/src/components/AuthGuard.tsx`) 🔥
 
 機能:
 - ページアクセス時に認証状態をチェック
@@ -532,7 +565,7 @@ export default function AuthGuard({ children }) {
 
 ホーム画面とチャット画面を `<AuthGuard>` でラップ
 
-#### 5.5 ファイルアップロード (`frontend/src/components/FileUpload.tsx`)
+#### 5.5 ファイルアップロード (`frontend/src/components/FileUpload.tsx`) 🔥
 
 機能:
 - JSONファイル選択
@@ -549,7 +582,7 @@ const { data } = await axios.get(
 );
 ```
 
-#### 5.6 チャットインターフェース (`frontend/src/components/ChatInterface.tsx`)
+#### 5.6 チャットインターフェース (`frontend/src/components/ChatInterface.tsx`) 🔄 後回し
 
 機能:
 - メッセージ履歴表示
@@ -563,15 +596,15 @@ const { data } = await axios.get(
 
 API呼び出し時も同様に認証トークンをヘッダーに付与
 
-#### 5.7 ページ構成
+#### 5.7 ページ構成 🔥
 
 - `/login` (page.tsx): ログイン画面 - Cognito認証
 - `/` (page.tsx): ホーム画面 - ファイルアップロード（認証必須）
-- `/chat` (page.tsx): チャット画面 - データ分析（認証必須）
+- `/chat` (page.tsx): チャット画面 - データ分析（認証必須）🔄 後回し
 
-### Phase 6: デプロイ・テスト
+### Phase 6: デプロイ・テスト 🔥 優先
 
-#### 6.1 CDKデプロイ
+#### 6.1 CDKデプロイ 🔥
 
 ```bash
 cd cdk
@@ -587,7 +620,7 @@ cdk deploy --all
 - S3バケット名
 - Amplify App URL
 
-#### 6.2 Cognitoユーザー作成
+#### 6.2 Cognitoユーザー作成 🔥
 
 CDKデプロイ後、AWS CLIまたはコンソールでユーザー作成:
 
@@ -613,7 +646,7 @@ aws cognito-idp admin-create-user \
 
 または、CDKスタック内でカスタムリソース（Lambda）を使用して自動作成も可能
 
-#### 6.3 フロントエンド設定
+#### 6.3 フロントエンド設定 🔥
 
 1. GitHubリポジトリにコードpush
 2. Amplify環境変数設定:
@@ -623,8 +656,9 @@ aws cognito-idp admin-create-user \
    - `NEXT_PUBLIC_AWS_REGION`: us-east-1（またはデプロイリージョン）
 3. 自動ビルド・デプロイ開始
 
-#### 6.4 初期テスト
+#### 6.4 初期テスト 🔥
 
+**優先テスト（データパイプライン）**:
 1. **ログインテスト**: demo@example.com でログイン確認
 2. サンプルYouTube履歴JSON作成（Google Takeoutから取得）
 3. フロントエンドからアップロード（認証済み状態で）
@@ -632,11 +666,13 @@ aws cognito-idp admin-create-user \
 4. CloudWatch Logsでジョブ実行確認
 5. Athenaコンソールでデータ確認
    - 確認: user_idパーティションが正しく作成されているか
-6. チャット画面で質問テスト（認証済み状態で）
-   - 確認: 自分のデータのみが返ってくるか
-7. **別ユーザーでログイン**して、データ分離を確認
+6. **別ユーザーでログイン**して、データ分離を確認
    - 確認: 他ユーザーのデータが見えないこと
-8. ログアウト機能のテスト
+7. ログアウト機能のテスト
+
+**後回し（チャット機能テスト）**:
+- チャット画面で質問テスト（認証済み状態で）
+  - 確認: 自分のデータのみが返ってくるか
 
 ## ユーザーごとのデータ分離まとめ
 
