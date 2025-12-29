@@ -2,6 +2,7 @@
 import os
 import aws_cdk as cdk
 from stacks.storage_stack import StorageStack
+from stacks.glue_stack import GlueStack
 
 
 app = cdk.App()
@@ -19,5 +20,16 @@ storage_stack = StorageStack(
     env=env,
     description="S3 buckets for YouTube analytics data storage"
 )
+
+# Glue Stack (データ処理ジョブ)
+glue_stack = GlueStack(
+    app,
+    "YoutubeAnalyticsGlueStack",
+    raw_bucket=storage_stack.raw_data_bucket,
+    processed_bucket=storage_stack.processed_data_bucket,
+    env=env,
+    description="Glue Python Shell job for data processing"
+)
+glue_stack.add_dependency(storage_stack)
 
 app.synth()
