@@ -3,6 +3,7 @@ import os
 import aws_cdk as cdk
 from stacks.storage_stack import StorageStack
 from stacks.glue_stack import GlueStack
+from stacks.athena_stack import AthenaStack
 
 
 app = cdk.App()
@@ -31,5 +32,16 @@ glue_stack = GlueStack(
     description="Glue Python Shell job for data processing"
 )
 glue_stack.add_dependency(storage_stack)
+
+# Athena Stack (データベース、テーブル、ワークグループ)
+athena_stack = AthenaStack(
+    app,
+    "YoutubeAnalyticsAthenaStack",
+    processed_bucket=storage_stack.processed_data_bucket,
+    athena_results_bucket=storage_stack.athena_results_bucket,
+    env=env,
+    description="Athena workgroup and table definitions"
+)
+athena_stack.add_dependency(storage_stack)
 
 app.synth()
