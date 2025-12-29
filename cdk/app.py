@@ -7,6 +7,7 @@ from stacks.athena_stack import AthenaStack
 from stacks.lambda_stack import LambdaStack
 from stacks.cognito_stack import CognitoStack
 from stacks.api_gateway_stack import ApiGatewayStack
+from stacks.amplify_stack import AmplifyStack
 
 
 app = cdk.App()
@@ -84,5 +85,18 @@ api_gateway_stack = ApiGatewayStack(
 )
 api_gateway_stack.add_dependency(cognito_stack)
 api_gateway_stack.add_dependency(lambda_stack)
+
+# Amplify Stack (フロントエンドホスティング)
+amplify_stack = AmplifyStack(
+    app,
+    "YoutubeAnalyticsAmplifyStack",
+    user_pool_id=cognito_stack.user_pool.user_pool_id,
+    user_pool_client_id=cognito_stack.user_pool_client.user_pool_client_id,
+    api_endpoint=api_gateway_stack.api_url,
+    env=env,
+    description="Amplify Hosting for Next.js frontend"
+)
+amplify_stack.add_dependency(cognito_stack)
+amplify_stack.add_dependency(api_gateway_stack)
 
 app.synth()

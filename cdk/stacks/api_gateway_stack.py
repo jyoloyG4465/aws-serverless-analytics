@@ -3,6 +3,7 @@ from aws_cdk import (
     aws_apigateway as apigw,
     aws_cognito as cognito,
     aws_lambda as lambda_,
+    CfnOutput,
 )
 from constructs import Construct
 
@@ -124,3 +125,10 @@ class ApiGatewayStack(Stack):
 
         # API URLを出力
         self.api_url = self.api.url
+
+        CfnOutput(
+            self,
+            "ApiEndpoint",
+            value=self.api.url,
+            description="API Gateway Endpoint URL",
+        )

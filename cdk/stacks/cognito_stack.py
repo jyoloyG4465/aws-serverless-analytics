@@ -2,6 +2,7 @@ from aws_cdk import (
     Stack,
     aws_cognito as cognito,
     RemovalPolicy,
+    CfnOutput,
 )
 from constructs import Construct
 
@@ -94,4 +95,19 @@ class CognitoStack(Stack):
             refresh_token_validity=cognito.Duration.days(30),
             # クライアントシークレット不要（パブリッククライアント）
             generate_secret=False,
+        )
+
+        # 出力
+        CfnOutput(
+            self,
+            "UserPoolId",
+            value=self.user_pool.user_pool_id,
+            description="Cognito User Pool ID",
+        )
+
+        CfnOutput(
+            self,
+            "UserPoolClientId",
+            value=self.user_pool_client.user_pool_client_id,
+            description="Cognito User Pool Client ID",
         )
