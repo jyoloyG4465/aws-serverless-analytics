@@ -1,10 +1,8 @@
-from aws_cdk import (
-    Stack,
-    aws_glue as glue,
-    aws_iam as iam,
-    aws_s3 as s3,
-    aws_s3_deployment as s3deploy,
-)
+from aws_cdk import RemovalPolicy, Stack
+from aws_cdk import aws_glue as glue
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_s3 as s3
+from aws_cdk import aws_s3_deployment as s3deploy
 from constructs import Construct
 
 
@@ -20,7 +18,7 @@ class GlueStack(Stack):
         construct_id: str,
         raw_bucket: s3.IBucket,
         processed_bucket: s3.IBucket,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -59,6 +57,8 @@ class GlueStack(Stack):
             bucket_name="jyoloyg-glue-scripts",
             encryption=s3.BucketEncryption.S3_MANAGED,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.DESTROY,  # 開発環境用：スタック削除時にバケットも削除
+            auto_delete_objects=True,  # 開発環境用：バケット削除時にオブジェクトも削除
             enforce_ssl=True,
         )
 

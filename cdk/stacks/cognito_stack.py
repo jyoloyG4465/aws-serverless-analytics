@@ -1,9 +1,5 @@
-from aws_cdk import (
-    Stack,
-    aws_cognito as cognito,
-    RemovalPolicy,
-    CfnOutput,
-)
+from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
+from aws_cdk import aws_cognito as cognito
 from constructs import Construct
 
 
@@ -15,12 +11,7 @@ class CognitoStack(Stack):
     - パスワードポリシー設定
     """
 
-    def __init__(
-        self,
-        scope: Construct,
-        construct_id: str,
-        **kwargs
-    ) -> None:
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Cognitoユーザープール
@@ -90,9 +81,9 @@ class CognitoStack(Stack):
                 ],
             ),
             # トークン有効期限
-            access_token_validity=cognito.Duration.hours(1),
-            id_token_validity=cognito.Duration.hours(1),
-            refresh_token_validity=cognito.Duration.days(30),
+            access_token_validity=Duration.hours(1),
+            id_token_validity=Duration.hours(1),
+            refresh_token_validity=Duration.days(30),
             # クライアントシークレット不要（パブリッククライアント）
             generate_secret=False,
         )
