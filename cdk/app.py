@@ -6,6 +6,7 @@ from stacks.glue_stack import GlueStack
 from stacks.athena_stack import AthenaStack
 from stacks.lambda_stack import LambdaStack
 from stacks.cognito_stack import CognitoStack
+from stacks.api_gateway_stack import ApiGatewayStack
 
 
 app = cdk.App()
@@ -70,5 +71,18 @@ cognito_stack = CognitoStack(
     env=env,
     description="Cognito user pool for authentication"
 )
+
+# API Gateway Stack (REST API + Cognito Authorizer)
+api_gateway_stack = ApiGatewayStack(
+    app,
+    "YoutubeAnalyticsApiGatewayStack",
+    user_pool=cognito_stack.user_pool,
+    chat_api_function=lambda_stack.chat_api_function,
+    upload_presigned_function=lambda_stack.upload_presigned_function,
+    env=env,
+    description="API Gateway with Cognito authentication"
+)
+api_gateway_stack.add_dependency(cognito_stack)
+api_gateway_stack.add_dependency(lambda_stack)
 
 app.synth()
