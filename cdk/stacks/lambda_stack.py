@@ -113,9 +113,7 @@ class LambdaStack(Stack):
             environment={
                 "ATHENA_DATABASE": database_name,
                 "ATHENA_WORKGROUP": workgroup_name,
-                "ATHENA_OUTPUT_BUCKET": athena_results_bucket.bucket_name,
-                "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20241022-v2:0",
-                "BEDROCK_REGION": self.region,
+                "ATHENA_OUTPUT_LOCATION": f"s3://{athena_results_bucket.bucket_name}/results/",
             },
             description="Chat API with Athena and Bedrock integration",
             log_group=chat_api_log_group,
@@ -156,7 +154,7 @@ class LambdaStack(Stack):
         processed_bucket.grant_read(self.chat_api_function)
         athena_results_bucket.grant_read_write(self.chat_api_function)
 
-        # Bedrock呼び出し権限
+        # Bedrock呼び出し権限（ap-northeast-1でClaude 3.5 Sonnet利用可能）
         self.chat_api_function.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["bedrock:InvokeModel"],

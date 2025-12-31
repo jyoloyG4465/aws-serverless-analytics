@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * ホームページ（ファイルアップロード画面）
+ * チャットページ（AI分析画面）
  * 認証が必要
  */
 
@@ -9,10 +9,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
-import FileUpload from '@/components/FileUpload';
+import ChatInterface from '@/components/ChatInterface';
 import { logout, getUser } from '@/lib/auth';
 
-function HomePage() {
+function ChatPage() {
   const router = useRouter();
   const [username, setUsername] = useState<string>('');
   const [loadingUser, setLoadingUser] = useState(true);
@@ -37,7 +37,7 @@ function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* ヘッダー */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -48,13 +48,13 @@ function HomePage() {
             <nav className="flex gap-4">
               <Link
                 href="/"
-                className="text-sm font-medium text-blue-600 border-b-2 border-blue-600"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               >
                 アップロード
               </Link>
               <Link
                 href="/chat"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-blue-600 border-b-2 border-blue-600"
               >
                 チャット分析
               </Link>
@@ -77,44 +77,39 @@ function HomePage() {
       </header>
 
       {/* メインコンテンツ */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <FileUpload />
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <ChatInterface />
+      </main>
 
-        {/* 説明セクション */}
-        <div className="mt-8 max-w-2xl mx-auto">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              このアプリについて
-            </h2>
-            <div className="space-y-3 text-sm text-gray-600">
+      {/* フッター（説明） */}
+      <footer className="bg-white border-t border-gray-200 mt-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="max-w-2xl mx-auto">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">
+              使い方
+            </h3>
+            <div className="space-y-2 text-xs text-gray-600">
               <p>
-                YouTube閲覧履歴（Google Takeout形式）をアップロードすると、
-                自動的にデータが処理され、Athenaで分析可能な形式に変換されます。
+                アップロードしたYouTube閲覧履歴データについて、AIに質問できます。
               </p>
               <p>
-                処理フロー：
+                Claude 3.5 Sonnetが、あなたの視聴履歴を分析して回答します。
               </p>
-              <ol className="list-decimal list-inside space-y-1 ml-4">
-                <li>JSONファイルをS3にアップロード</li>
-                <li>AWS Glueジョブが自動的に起動</li>
-                <li>データがParquet形式に変換されてS3に保存</li>
-                <li>Athenaでクエリ可能な状態になります</li>
-              </ol>
-              <p className="text-xs text-gray-500 mt-4">
-                注意：アップロードされたデータは2日後に自動削除されます（検証用途）
+              <p className="text-gray-500">
+                注意：データがアップロードされていない場合は、まず<Link href="/" className="text-blue-600 hover:underline">アップロードページ</Link>からファイルをアップロードしてください。
               </p>
             </div>
           </div>
         </div>
-      </main>
+      </footer>
     </div>
   );
 }
 
-export default function Home() {
+export default function Chat() {
   return (
     <AuthGuard>
-      <HomePage />
+      <ChatPage />
     </AuthGuard>
   );
 }

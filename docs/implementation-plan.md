@@ -144,20 +144,20 @@ aws-serverless-analytics/
 7. ✅ **Phase 5.4**: 認証ガード作成
 8. ✅ **Phase 5.5**: ファイルアップロードコンポーネント作成
 9. ✅ **Phase 5.7**: ページ構成（login, home）
-10. **Phase 6.1**: CDK デプロイ実行
-11. **Phase 6.2**: Cognito ユーザー作成
-12. **Phase 6.3**: フロントエンドデプロイ
-13. **Phase 6.4**: 基本動作テスト（アップロード →Glue→Athena テーブル確認）
+10. ✅ **Phase 6.1**: CDK デプロイ実行
+11. ✅ **Phase 6.2**: Cognito ユーザー作成
+12. ✅ **Phase 6.3**: フロントエンドデプロイ
+13. ✅ **Phase 6.4**: 基本動作テスト（アップロード →Glue→Athena テーブル確認）
 
-### 🔄 後回し（AI/チャット機能）
+### ✅ 完了（AI/チャット機能）
 
 **目的**: データパイプライン完成後に実装
 
-- **Phase 4.1**: 共通ライブラリ - Athena クライアント実装
-- **Phase 4.2**: 共通ライブラリ - Bedrock クライアント実装
-- **Phase 4.3**: Lambda chat-api 実装（Athena + Bedrock 統合）
-- **Phase 5.6**: チャットインターフェースコンポーネント作成
-- **Phase 5.7**: チャットページ構成
+- ✅ **Phase 4.1**: 共通ライブラリ - Athena クライアント実装
+- ✅ **Phase 4.2**: 共通ライブラリ - Bedrock クライアント実装（ap-northeast-1、Claude 3.5 Sonnet）
+- ✅ **Phase 4.3**: Lambda chat-api 実装（Athena + Bedrock 統合）
+- ✅ **Phase 5.6**: チャットインターフェースコンポーネント作成
+- ✅ **Phase 5.7**: チャットページ構成
 
 ## 実装ステップ
 
