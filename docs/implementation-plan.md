@@ -462,7 +462,7 @@ def lambda_handler(event, context):
 
 ### Phase 4: Lambda 関数実装
 
-#### 4.1 Athena クライアント (`lambdas/shared/athena_client.py`) 🔄 後回し
+#### 4.1 Athena クライアント (`lambdas/shared/athena_client.py`) ✅
 
 機能:
 
@@ -470,15 +470,16 @@ def lambda_handler(event, context):
 - **クエリキャッシング**（メモリ内、Lambda 暖機時に有効）
 - タイムアウト処理
 - エラーハンドリング
+- WorkGroup 指定対応
 
-#### 4.2 Bedrock クライアント (`lambdas/shared/bedrock_client.py`) 🔄 後回し
+#### 4.2 Bedrock クライアント (`lambdas/shared/bedrock_client.py`) ✅
 
-- モデル: Claude 3.5 Sonnet (`anthropic.claude-3-5-sonnet-20241022-v2:0`)
-- リージョン: us-east-1（Bedrock が利用可能なリージョン）
+- モデル: Claude 3.5 Sonnet (`anthropic.claude-3-5-sonnet-20240620-v1:0`)
+- リージョン: ap-northeast-1（Bedrock が利用可能なリージョン）
 - max_tokens: 2000（コスト最適化）
 - temperature: 0.7
 
-#### 4.3 チャット API Lambda (`lambdas/chat_api/handler.py`) 🔄 後回し
+#### 4.3 チャット API Lambda (`lambdas/chat_api/handler.py`) ✅
 
 **処理フロー** (シンプルなキーワードマッチ方式 + **user_id フィルタリング**):
 
@@ -645,18 +646,20 @@ const { data } = await axios.get(
 );
 ```
 
-#### 5.6 チャットインターフェース (`frontend/src/components/ChatInterface.tsx`) 🔄 後回し
+#### 5.6 チャットインターフェース (`frontend/src/components/ChatInterface.tsx`) ✅
 
 機能:
 
 - メッセージ履歴表示
 - ユーザー入力
 - `/chat` API へ POST リクエスト
-- ストリーミングレスポンス対応（オプション）
 - 質問例の表示:
   - 「最も視聴したチャンネルトップ 10 は？」
-  - 「2024 年に何本の動画を見ましたか？」
+  - 「全部で何本の動画を見ましたか？」
   - 「最近 1 ヶ月の視聴傾向は？」
+  - 「日別の視聴数の推移を教えて」
+- Enter キーで送信対応
+- ローディング状態表示
 
 API 呼び出し時も同様に認証トークンをヘッダーに付与
 
@@ -664,7 +667,7 @@ API 呼び出し時も同様に認証トークンをヘッダーに付与
 
 - `/login` (page.tsx): ログイン画面 - Cognito 認証
 - `/` (page.tsx): ホーム画面 - ファイルアップロード（認証必須）
-- `/chat` (page.tsx): チャット画面 - データ分析（認証必須）🔄 後回し
+- `/chat` (page.tsx): チャット画面 - データ分析（認証必須）
 
 ### Phase 6: デプロイ・テスト 🔥 優先
 
@@ -736,10 +739,12 @@ aws cognito-idp admin-create-user \
    - 確認: 他ユーザーのデータが見えないこと
 7. ログアウト機能のテスト
 
-**後回し（チャット機能テスト）**:
+**完了（チャット機能テスト）** ✅:
 
 - チャット画面で質問テスト（認証済み状態で）
   - 確認: 自分のデータのみが返ってくるか
+- Bedrock モデルアクセス設定完了
+- Athena + Bedrock 統合動作確認完了
 
 ## ユーザーごとのデータ分離まとめ
 
