@@ -28,12 +28,10 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 export async function getUploadUrl(fileName: string): Promise<UploadUrlResponse> {
   try {
     const headers = await getAuthHeaders();
-    const response = await axios.get<UploadUrlResponse>(
+    const response = await axios.post<UploadUrlResponse>(
       `${API_URL}/upload`,
-      {
-        params: { fileName },
-        headers,
-      }
+      { fileName },  // POSTリクエストのbodyとして送信
+      { headers }
     );
     return response.data;
   } catch (error) {
