@@ -34,9 +34,22 @@ class GlueStack(Stack):
             ],
         )
 
+        # Glueスクリプト用のS3バケット（先に作成してから権限付与）
+        script_bucket = s3.Bucket(
+            self,
+            "GlueScriptBucket",
+            bucket_name="jyoloyg-glue-script",
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
+            enforce_ssl=True,
+        )
+
         # S3バケットへの読み書き権限
         raw_bucket.grant_read(glue_role)
         processed_bucket.grant_write(glue_role)
+        script_bucket.grant_read(glue_role)  # スクリプトバケットへの読み取り権限を追加
 
         # CloudWatch Logsへの書き込み権限
         glue_role.add_to_policy(
@@ -48,18 +61,6 @@ class GlueStack(Stack):
                 ],
                 resources=["*"],
             )
-        )
-
-        # Glueスクリプト用のS3バケット
-        script_bucket = s3.Bucket(
-            self,
-            "GlueScriptBucket",
-            bucket_name="jyoloyg-glue-script",
-            encryption=s3.BucketEncryption.S3_MANAGED,
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy=RemovalPolicy.DESTROY,  # 開発環境用：スタック削除時にバケットも削除
-            auto_delete_objects=True,  # 開発環境用：バケット削除時にオブジェクトも削除
-            enforce_ssl=True,
         )
 
         # Glueスクリプトをデプロイ
