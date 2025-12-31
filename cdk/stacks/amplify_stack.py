@@ -5,7 +5,6 @@ from aws_cdk import (
     CfnOutput,
 )
 from constructs import Construct
-import os
 import json
 
 
@@ -63,18 +62,18 @@ class AmplifyStack(Stack):
             "YoutubeAnalyticsAmplifyApp",
             name="youtube-analytics-frontend",
             description="YouTube Analytics Next.js Frontend",
-            # 環境変数
+            # 環境変数（.env.localと統一）
             environment_variables=[
                 amplify.CfnApp.EnvironmentVariableProperty(
-                    name="NEXT_PUBLIC_USER_POOL_ID",
+                    name="NEXT_PUBLIC_COGNITO_USER_POOL_ID",
                     value=user_pool_id,
                 ),
                 amplify.CfnApp.EnvironmentVariableProperty(
-                    name="NEXT_PUBLIC_USER_POOL_CLIENT_ID",
+                    name="NEXT_PUBLIC_COGNITO_CLIENT_ID",
                     value=user_pool_client_id,
                 ),
                 amplify.CfnApp.EnvironmentVariableProperty(
-                    name="NEXT_PUBLIC_API_ENDPOINT",
+                    name="NEXT_PUBLIC_API_URL",
                     value=api_endpoint,
                 ),
                 amplify.CfnApp.EnvironmentVariableProperty(

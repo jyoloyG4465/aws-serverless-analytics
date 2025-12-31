@@ -54,7 +54,7 @@ class GlueStack(Stack):
         script_bucket = s3.Bucket(
             self,
             "GlueScriptBucket",
-            bucket_name="jyoloyg-glue-scripts",
+            bucket_name="jyoloyg-glue-script",
             encryption=s3.BucketEncryption.S3_MANAGED,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy=RemovalPolicy.DESTROY,  # 開発環境用：スタック削除時にバケットも削除

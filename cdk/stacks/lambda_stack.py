@@ -1,11 +1,13 @@
 from aws_cdk import (
     Stack,
+    RemovalPolicy,
     aws_lambda as lambda_,
     aws_iam as iam,
     aws_s3 as s3,
     aws_glue as glue,
     aws_events as events,
     aws_events_targets as targets,
+    aws_logs as logs,
     Duration,
 )
 from constructs import Construct
@@ -34,6 +36,15 @@ class LambdaStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # 1. Trigger Glue Lambda関数
+        # ロググループを明示的に作成（cdk destroyで自動削除されるように）
+        trigger_glue_log_group = logs.LogGroup(
+            self,
+            "TriggerGlueLogGroup",
+            log_group_name="/aws/lambda/youtube-analytics-trigger-glue",
+            removal_policy=RemovalPolicy.DESTROY,
+            retention=logs.RetentionDays.ONE_WEEK,
+        )
+
         self.trigger_glue_function = lambda_.Function(
             self,
             "TriggerGlueFunction",
@@ -48,6 +59,7 @@ class LambdaStack(Stack):
                 "OUTPUT_BUCKET": processed_bucket.bucket_name,
             },
             description="Trigger Glue job on S3 upload",
+            log_group=trigger_glue_log_group,
         )
 
         # Glueジョブ起動権限
@@ -80,6 +92,15 @@ class LambdaStack(Stack):
         s3_event_rule.add_target(targets.LambdaFunction(self.trigger_glue_function))
 
         # 2. Chat API Lambda関数
+        # ロググループを明示的に作成（cdk destroyで自動削除されるように）
+        chat_api_log_group = logs.LogGroup(
+            self,
+            "ChatApiLogGroup",
+            log_group_name="/aws/lambda/youtube-analytics-chat-api",
+            removal_policy=RemovalPolicy.DESTROY,
+            retention=logs.RetentionDays.ONE_WEEK,
+        )
+
         self.chat_api_function = lambda_.Function(
             self,
             "ChatApiFunction",
@@ -97,6 +118,7 @@ class LambdaStack(Stack):
                 "BEDROCK_REGION": self.region,
             },
             description="Chat API with Athena and Bedrock integration",
+            log_group=chat_api_log_group,
         )
 
         # Athena実行権限
@@ -145,6 +167,15 @@ class LambdaStack(Stack):
         )
 
         # 3. Upload Presigned URL Lambda関数
+        # ロググループを明示的に作成（cdk destroyで自動削除されるように）
+        upload_presigned_log_group = logs.LogGroup(
+            self,
+            "UploadPresignedLogGroup",
+            log_group_name="/aws/lambda/youtube-analytics-upload-presigned",
+            removal_policy=RemovalPolicy.DESTROY,
+            retention=logs.RetentionDays.ONE_WEEK,
+        )
+
         self.upload_presigned_function = lambda_.Function(
             self,
             "UploadPresignedFunction",
@@ -158,6 +189,7 @@ class LambdaStack(Stack):
                 "RAW_BUCKET": raw_bucket.bucket_name,
             },
             description="Generate S3 presigned URL for file upload",
+            log_group=upload_presigned_log_group,
         )
 
         # S3書き込み権限

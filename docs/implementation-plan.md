@@ -1,23 +1,25 @@
-# YouTube閲覧履歴分析 - AWS サーバーレスアプリケーション実装プラン
+# YouTube 閲覧履歴分析 - AWS サーバーレスアプリケーション実装プラン
 
 ## 概要
 
-YouTube閲覧履歴（JSON）をAWSで分析し、Bedrockを使ったチャットインターフェースで質問できるアプリケーションを構築します。
+YouTube 閲覧履歴（JSON）を AWS で分析し、Bedrock を使ったチャットインターフェースで質問できるアプリケーションを構築します。
 
 **主要機能**:
-- AWS Cognito による認証機能（自分用 + 共有サンプル用の2アカウント）
-- **ユーザーごとのデータ完全分離**（S3パスで各ユーザーのデータを分離）
-- JSONファイルアップロード → 自動データ加工（Glue Python Shell）
-- Athenaでのデータクエリ（ユーザー自身のデータのみアクセス）
-- Bedrockチャット（Claude 3.5 Sonnet）によるAI分析
-- **期間限定保存**（2日後に自動削除、検証用）
 
-**コスト最適化優先**：個人利用・デモ用として月額$3-5程度を想定
+- AWS Cognito による認証機能（自分用 + 共有サンプル用の 2 アカウント）
+- **ユーザーごとのデータ完全分離**（S3 パスで各ユーザーのデータを分離）
+- JSON ファイルアップロード → 自動データ加工（Glue Python Shell）
+- Athena でのデータクエリ（ユーザー自身のデータのみアクセス）
+- Bedrock チャット（Claude 3.5 Sonnet）による AI 分析
+- **期間限定保存**（2 日後に自動削除、検証用）
+
+**コスト最適化優先**：個人利用・デモ用として月額$3-5 程度を想定
 
 **データ管理ポリシー**:
-- ユーザーごとにS3パスを分離（`s3://bucket/{user-id}/`）
-- 各ユーザーは自分のデータのみアクセス可能（Cognito User IDで制御）
-- アップロード後2日で自動削除（S3ライフサイクルポリシー）
+
+- ユーザーごとに S3 パスを分離（`s3://bucket/{user-id}/`）
+- 各ユーザーは自分のデータのみアクセス可能（Cognito User ID で制御）
+- アップロード後 2 日で自動削除（S3 ライフサイクルポリシー）
 - デモ・検証用途でシンプルな構成
 
 ## システムアーキテクチャ
@@ -45,14 +47,14 @@ YouTube閲覧履歴（JSON）をAWSで分析し、Bedrockを使ったチャッ�
 ## 技術スタック
 
 - **フロントエンド**: Next.js 14 (App Router) + React + TypeScript + Tailwind CSS
-- **バックエンド**: Python 3.9+ (Lambda関数)
+- **バックエンド**: Python 3.9+ (Lambda 関数)
 - **インフラ**: AWS CDK (Python)
 - **AWS サービス**:
   - S3 (ストレージ)
-  - Glue Python Shell (データ加工) ← **Redshift不使用でコスト削減**
+  - Glue Python Shell (データ加工) ← **Redshift 不使用でコスト削減**
   - Athena (クエリエンジン)
   - Lambda (サーバーレス関数)
-  - Bedrock Claude 3.5 Sonnet (AI分析)
+  - Bedrock Claude 3.5 Sonnet (AI 分析)
   - API Gateway (REST API)
   - Amplify (フロントエンドホスティング)
   - Cognito (ユーザー認証) ← **追加**
@@ -131,29 +133,29 @@ aws-serverless-analytics/
 
 ### 🔥 優先実装（データパイプライン構築）
 
-**目的**: ファイルアップロード → Glue加工 → Athena までの基本パイプラインを完成させる
+**目的**: ファイルアップロード → Glue 加工 → Athena までの基本パイプラインを完成させる
 
-1. ✅ **Phase 3.1**: Glueジョブ実装（JSON → Parquet変換）
-2. ✅ **Phase 3.2**: Lambda trigger-glue実装（S3イベントでGlue起動）
-3. ✅ **Phase 4.4**: Lambda upload-presigned実装（署名付きURL生成）
-4. ✅ **Phase 5.1**: Next.jsプロジェクト初期化
-5. ✅ **Phase 5.2**: Cognito認証設定
+1. ✅ **Phase 3.1**: Glue ジョブ実装（JSON → Parquet 変換）
+2. ✅ **Phase 3.2**: Lambda trigger-glue 実装（S3 イベントで Glue 起動）
+3. ✅ **Phase 4.4**: Lambda upload-presigned 実装（署名付き URL 生成）
+4. ✅ **Phase 5.1**: Next.js プロジェクト初期化
+5. ✅ **Phase 5.2**: Cognito 認証設定
 6. ✅ **Phase 5.3**: ログインフォーム作成
 7. ✅ **Phase 5.4**: 認証ガード作成
 8. ✅ **Phase 5.5**: ファイルアップロードコンポーネント作成
 9. ✅ **Phase 5.7**: ページ構成（login, home）
-10. **Phase 6.1**: CDKデプロイ実行
-11. **Phase 6.2**: Cognitoユーザー作成
+10. **Phase 6.1**: CDK デプロイ実行
+11. **Phase 6.2**: Cognito ユーザー作成
 12. **Phase 6.3**: フロントエンドデプロイ
-13. **Phase 6.4**: 基本動作テスト（アップロード→Glue→Athenaテーブル確認）
+13. **Phase 6.4**: 基本動作テスト（アップロード →Glue→Athena テーブル確認）
 
 ### 🔄 後回し（AI/チャット機能）
 
 **目的**: データパイプライン完成後に実装
 
-- **Phase 4.1**: 共通ライブラリ - Athenaクライアント実装
-- **Phase 4.2**: 共通ライブラリ - Bedrockクライアント実装
-- **Phase 4.3**: Lambda chat-api実装（Athena + Bedrock統合）
+- **Phase 4.1**: 共通ライブラリ - Athena クライアント実装
+- **Phase 4.2**: 共通ライブラリ - Bedrock クライアント実装
+- **Phase 4.3**: Lambda chat-api 実装（Athena + Bedrock 統合）
 - **Phase 5.6**: チャットインターフェースコンポーネント作成
 - **Phase 5.7**: チャットページ構成
 
@@ -170,43 +172,48 @@ aws-serverless-analytics/
 
 ### Phase 2: AWS CDK インフラストラクチャ構築 ✅
 
-#### 2.1 S3バケット (`cdk/stacks/storage_stack.py`) ✅
+#### 2.1 S3 バケット (`cdk/stacks/storage_stack.py`) ✅
 
-3つのバケットを作成（**ユーザーごとのパス分離**）：
+3 つのバケットを作成（**ユーザーごとのパス分離**）：
 
-1. **raw-data-bucket**: JSONファイルアップロード先
+1. **raw-data-bucket**: JSON ファイルアップロード先
+
    - パス構造: `s3://bucket/raw/{user-id}/{filename}.json`
    - バージョニング: 無効（デモ用）
-   - **ライフサイクル: 2日後に全データ自動削除**
-   - S3イベント通知設定（Lambda trigger起動）
+   - **ライフサイクル: 2 日後に全データ自動削除**
+   - S3 イベント通知設定（Lambda trigger 起動）
    - 例: `s3://raw-bucket/raw/user-abc123/watch-history.json`
 
-2. **processed-data-bucket**: Parquet形式の加工済みデータ
+2. **processed-data-bucket**: Parquet 形式の加工済みデータ
+
    - パス構造: `s3://bucket/processed/{user-id}/year=YYYY/month=MM/day=DD/data.parquet`
-   - パーティション: ユーザーID + 日付
+   - パーティション: ユーザー ID + 日付
    - 圧縮: Snappy
-   - **ライフサイクル: 2日後に全データ自動削除**
+   - **ライフサイクル: 2 日後に全データ自動削除**
    - 例: `s3://processed-bucket/processed/user-abc123/year=2025/month=01/day=15/data.parquet`
 
-3. **athena-results-bucket**: Athenaクエリ結果
+3. **athena-results-bucket**: Athena クエリ結果
    - パス構造: `s3://bucket/results/{user-id}/`
-   - **ライフサイクル: 2日後削除**（検証用）
+   - **ライフサイクル: 2 日後削除**（検証用）
 
 **重要な設計判断**:
+
 - 各ユーザーのデータは完全に分離されたパスに保存
-- Lambda関数でCognito User IDを取得してパス生成
-- Athenaクエリ時も`user_id`でフィルタリング
-- 2日間の期間限定保存でストレージコスト削減（検証用）
+- Lambda 関数で Cognito User ID を取得してパス生成
+- Athena クエリ時も`user_id`でフィルタリング
+- 2 日間の期間限定保存でストレージコスト削減（検証用）
 
-#### 2.2 Glue Python Shellジョブ (`cdk/stacks/glue_stack.py`) ✅
+#### 2.2 Glue Python Shell ジョブ (`cdk/stacks/glue_stack.py`) ✅
 
-**重要な選択**: Glue Python Shellを使用（PySpark不使用）
-- 理由: データ量が少量（数MB〜数十MB）のため、Python Shellの方がコスト効率が良い
+**重要な選択**: Glue Python Shell を使用（PySpark 不使用）
+
+- 理由: データ量が少量（数 MB〜数十 MB）のため、Python Shell の方がコスト効率が良い
 - DPU: 1.0 (最小)
-- タイムアウト: 10分
+- タイムアウト: 10 分
 - Python: 3.9
 
 設定：
+
 ```python
 glue.CfnJob(
     command=glue.CfnJob.JobCommandProperty(
@@ -219,14 +226,15 @@ glue.CfnJob(
 )
 ```
 
-#### 2.3 Athenaワークグループ (`cdk/stacks/athena_stack.py`) ✅
+#### 2.3 Athena ワークグループ (`cdk/stacks/athena_stack.py`) ✅
 
 - データベース: `youtube_analytics_db`
 - テーブル: `youtube_watch_history`
-- **Partition Projection有効**（ユーザーID + 日付でパフォーマンス向上）
+- **Partition Projection 有効**（ユーザー ID + 日付でパフォーマンス向上）
 - クエリ結果の再利用: 有効（コスト削減）
 
-テーブルスキーマ（**user_idパーティション追加**）：
+テーブルスキーマ（**user_id パーティション追加**）：
+
 ```sql
 CREATE EXTERNAL TABLE youtube_watch_history (
   title STRING,
@@ -258,6 +266,7 @@ TBLPROPERTIES (
 ```
 
 **クエリ例**（ユーザー自身のデータのみ取得）:
+
 ```sql
 -- Lambda関数内でuser_idを動的に挿入
 SELECT channel_name, COUNT(*) as watch_count
@@ -268,28 +277,31 @@ ORDER BY watch_count DESC
 LIMIT 10;
 ```
 
-#### 2.4 Lambda関数 (`cdk/stacks/lambda_stack.py`) ✅
+#### 2.4 Lambda 関数 (`cdk/stacks/lambda_stack.py`) ✅
 
-3つのLambda関数（**全てCognito User ID対応**）：
+3 つの Lambda 関数（**全て Cognito User ID 対応**）：
 
-1. **trigger-glue**: S3イベント → Glueジョブ起動
+1. **trigger-glue**: S3 イベント → Glue ジョブ起動
+
    - メモリ: 128MB
-   - タイムアウト: 30秒
-   - 機能: S3パスからuser_idを抽出してGlueジョブに渡す
+   - タイムアウト: 30 秒
+   - 機能: S3 パスから user_id を抽出して Glue ジョブに渡す
 
-2. **chat-api**: Athena + Bedrock統合
-   - メモリ: 512MB（Bedrockレスポンス処理のため）
-   - タイムアウト: 29秒（API Gateway制限）
+2. **chat-api**: Athena + Bedrock 統合
+
+   - メモリ: 512MB（Bedrock レスポンス処理のため）
+   - タイムアウト: 29 秒（API Gateway 制限）
    - 環境変数: ATHENA_DATABASE, BEDROCK_MODEL_ID
-   - **重要**: API GatewayからCognito User IDを取得し、Athenaクエリに使用
+   - **重要**: API Gateway から Cognito User ID を取得し、Athena クエリに使用
 
-3. **upload-presigned**: S3署名付きURL生成
+3. **upload-presigned**: S3 署名付き URL 生成
    - メモリ: 128MB
-   - タイムアウト: 10秒
-   - **重要**: API GatewayからCognito User IDを取得し、S3パスに含める
-   - 生成URL例: `s3://raw-bucket/raw/user-abc123/{filename}.json`
+   - タイムアウト: 10 秒
+   - **重要**: API Gateway から Cognito User ID を取得し、S3 パスに含める
+   - 生成 URL 例: `s3://raw-bucket/raw/user-abc123/{filename}.json`
 
-**Cognito User ID取得方法**:
+**Cognito User ID 取得方法**:
+
 ```python
 # API Gatewayのイベントから取得
 def get_user_id(event):
@@ -304,71 +316,80 @@ def get_user_id(event):
 **新規追加**: AWS Cognito による認証
 
 ユーザープール設定:
+
 - サインイン: Email
-- パスワードポリシー: 最小8文字、大小英字・数字必須
-- MFA: オプション（無効でOK、個人利用のため）
-- パスワードリセット: Email経由
+- パスワードポリシー: 最小 8 文字、大小英字・数字必須
+- MFA: オプション（無効で OK、個人利用のため）
+- パスワードリセット: Email 経由
 - アカウント作成: 管理者のみ（セルフサインアップ無効）
 
 作成するユーザー:
+
 1. **自分用アカウント**: 管理者権限
 2. **共有サンプルアカウント**: 閲覧専用（demo@example.com / DemoUser123!など）
 
-Amplify連携:
-- ユーザープールID、クライアントIDをAmplify環境変数に設定
+Amplify 連携:
+
+- ユーザープール ID、クライアント ID を Amplify 環境変数に設定
 
 #### 2.6 API Gateway (`cdk/stacks/api_stack.py`) ✅
 
 REST API:
+
 - `/upload-url` (GET) → upload-presigned Lambda
 - `/chat` (POST) → chat-api Lambda
-- CORS: Amplifyドメインのみ許可（本番）
+- CORS: Amplify ドメインのみ許可（本番）
 
 **認証**: Cognito User Pool Authorizer
-- 全エンドポイントでCognitoトークン検証必須
-- 未認証リクエストは401エラー
+
+- 全エンドポイントで Cognito トークン検証必須
+- 未認証リクエストは 401 エラー
 
 #### 2.7 Amplify Hosting (`cdk/stacks/amplify_stack.py`) ✅
 
-- GitHub連携
+- GitHub 連携
 - 自動ビルド・デプロイ
 - 環境変数:
-  - `NEXT_PUBLIC_API_URL`: API GatewayのURL
-  - `NEXT_PUBLIC_COGNITO_USER_POOL_ID`: CognitoユーザープールID
-  - `NEXT_PUBLIC_COGNITO_CLIENT_ID`: CognitoクライアントID
-  - `NEXT_PUBLIC_AWS_REGION`: AWSリージョン
+  - `NEXT_PUBLIC_API_URL`: API Gateway の URL
+  - `NEXT_PUBLIC_COGNITO_USER_POOL_ID`: Cognito ユーザープール ID
+  - `NEXT_PUBLIC_COGNITO_CLIENT_ID`: Cognito クライアント ID
+  - `NEXT_PUBLIC_AWS_REGION`: AWS リージョン
 
 ### Phase 3: データ処理パイプライン実装 🔥 優先
 
-#### 3.1 Glueジョブ (`glue_jobs/process_youtube_history.py`) ✅
+#### 3.1 Glue ジョブ (`glue_jobs/process_youtube_history.py`) ✅
 
-**処理フロー**（**user_id対応**）:
-1. 引数からINPUT_PATH、OUTPUT_PATH、user_idを取得
-2. S3からJSONファイル読み込み（`s3://bucket/raw/{user_id}/{filename}.json`）
+**処理フロー**（**user_id 対応**）:
+
+1. 引数から INPUT_PATH、OUTPUT_PATH、user_id を取得
+2. S3 から JSON ファイル読み込み（`s3://bucket/raw/{user_id}/{filename}.json`）
 3. **広告レコードを除外**:
    - `details` に `"Google 広告から"` が含まれるレコードをフィルタ
-4. YouTubeデータパース:
+4. YouTube データパース:
    - `video_title`: タイトルから「〇〇 を視聴しました」の部分を抽出
-   - `video_id`: titleUrlから11文字の動画IDを抽出
-   - `channel_name`: subtitles[0].nameから取得
-   - `channel_id`: subtitles[0].urlからチャンネルIDを抽出
-   - `watched_at`: timeをタイムスタンプに変換
-5. Pandas DataFrameに変換
-6. **user_idパーティションのみで**Parquet形式で保存（Snappy圧縮）
+   - `video_id`: titleUrl から 11 文字の動画 ID を抽出
+   - `channel_name`: subtitles[0].name から取得
+   - `channel_id`: subtitles[0].url からチャンネル ID を抽出
+   - `watched_at`: time をタイムスタンプに変換
+5. Pandas DataFrame に変換
+6. **user_id パーティションのみで**Parquet 形式で保存（Snappy 圧縮）
 7. 出力先: `s3://bucket/processed/{user_id}/data.parquet`
    - **注意**: 日付パーティションなし（シンプル化）
 
-**YouTube履歴JSONスキーマ**（Google Takeout形式）:
+**YouTube 履歴 JSON スキーマ**（Google Takeout 形式）:
+
 ```json
 [
   {
     "header": "YouTube",
     "title": "鈴木誠也「メジャー移籍から4年間のホームラン数は大谷に次ぐ日本人2位です」←これwww【ネット反応集】 を視聴しました",
     "titleUrl": "https://www.youtube.com/watch?v=HoASJiuVNhk",
-    "subtitles": [{
-      "name": "野球馬鹿チャンネル【ネット反応集】",
-      "url": "https://www.youtube.com/channel/UCGtCj48DUKCTbaZdqOIpaJA"
-    }],
+    "subtitles": [
+      {
+        "name": "野球馬鹿チャンネル【ネット反応集】",
+        "url": "https://www.youtube.com/channel/UCGtCj48DUKCTbaZdqOIpaJA"
+      }
+    ],
     "time": "2025-12-27T10:26:59.596Z",
     "products": ["YouTube"],
     "activityControls": ["YouTube の再生履歴"]
@@ -378,19 +399,23 @@ REST API:
     "title": "YouTube のトップページで広告を視聴しました",
     "time": "2025-12-27T10:28:25.686Z",
     "products": ["YouTube"],
-    "details": [{
-      "name": "Google 広告から"
-    }],
+    "details": [
+      {
+        "name": "Google 広告から"
+      }
+    ],
     "activityControls": ["ウェブとアプリのアクティビティ", "YouTube の再生履歴"]
   }
 ]
 ```
 
 **広告の判定基準**:
+
 - `details` 配列に `{"name": "Google 広告から"}` が含まれる場合は広告と判定し、除外する
 
 **依存ライブラリ**:
-- pandas, pyarrow (Glueジョブの `--additional-python-modules` パラメータで指定)
+
+- pandas, pyarrow (Glue ジョブの `--additional-python-modules` パラメータで指定)
 - boto3 (Glue Python Shell に標準で含まれる)
 
 #### 3.2 Lambda trigger-glue (`lambdas/trigger_glue/handler.py`) ✅
@@ -435,36 +460,38 @@ def lambda_handler(event, context):
     return {'statusCode': 200}
 ```
 
-### Phase 4: Lambda関数実装
+### Phase 4: Lambda 関数実装
 
-#### 4.1 Athenaクライアント (`lambdas/shared/athena_client.py`) 🔄 後回し
+#### 4.1 Athena クライアント (`lambdas/shared/athena_client.py`) 🔄 後回し
 
 機能:
+
 - クエリ実行・結果取得
-- **クエリキャッシング**（メモリ内、Lambda暖機時に有効）
+- **クエリキャッシング**（メモリ内、Lambda 暖機時に有効）
 - タイムアウト処理
 - エラーハンドリング
 
-#### 4.2 Bedrockクライアント (`lambdas/shared/bedrock_client.py`) 🔄 後回し
+#### 4.2 Bedrock クライアント (`lambdas/shared/bedrock_client.py`) 🔄 後回し
 
 - モデル: Claude 3.5 Sonnet (`anthropic.claude-3-5-sonnet-20241022-v2:0`)
-- リージョン: us-east-1（Bedrockが利用可能なリージョン）
+- リージョン: us-east-1（Bedrock が利用可能なリージョン）
 - max_tokens: 2000（コスト最適化）
 - temperature: 0.7
 
-#### 4.3 チャットAPI Lambda (`lambdas/chat_api/handler.py`) 🔄 後回し
+#### 4.3 チャット API Lambda (`lambdas/chat_api/handler.py`) 🔄 後回し
 
 **処理フロー** (シンプルなキーワードマッチ方式 + **user_id フィルタリング**):
 
-1. API GatewayからCognito User IDを取得
+1. API Gateway から Cognito User ID を取得
 2. ユーザーの質問を受け取る
-3. **キーワードマッチング**で適切なAthenaクエリを選択（**全てuser_idでフィルタ**）:
-   - "most watched" → チャンネル別視聴回数TOP10（そのユーザーのみ）
+3. **キーワードマッチング**で適切な Athena クエリを選択（**全て user_id でフィルタ**）:
+   - "most watched" → チャンネル別視聴回数 TOP10（そのユーザーのみ）
    - "total videos" → 総視聴動画数（そのユーザーのみ）
-   - "recent" / "最近" → 直近30日の視聴履歴（そのユーザーのみ）
-   - デフォルト → 全データから100件サンプリング（そのユーザーのみ）
-4. Athenaクエリ実行（キャッシング活用）
-5. Bedrockに質問とデータを渡してプロンプト生成:
+   - "recent" / "最近" → 直近 30 日の視聴履歴（そのユーザーのみ）
+   - デフォルト → 全データから 100 件サンプリング（そのユーザーのみ）
+4. Athena クエリ実行（キャッシング活用）
+5. Bedrock に質問とデータを渡してプロンプト生成:
+
    ```
    以下のYouTube閲覧履歴データに基づいて質問に答えてください。
 
@@ -473,9 +500,11 @@ def lambda_handler(event, context):
 
    データに基づいた具体的な回答を提供してください。
    ```
-6. Bedrock回答を返す
 
-**クエリ例** (user_idフィルタリング):
+6. Bedrock 回答を返す
+
+**クエリ例** (user_id フィルタリング):
+
 ```python
 def get_query(question, user_id):
     if 'most watched' in question.lower():
@@ -507,7 +536,7 @@ def get_query(question, user_id):
 
 ### Phase 5: フロントエンド実装 ✅
 
-#### 5.1 Next.jsプロジェクト初期化 (`frontend/`) ✅
+#### 5.1 Next.js プロジェクト初期化 (`frontend/`) ✅
 
 ```bash
 npx create-next-app@latest . --typescript --tailwind --app
@@ -515,16 +544,23 @@ npm install axios @aws-amplify/auth aws-amplify
 ```
 
 **依存パッケージ**:
-- `axios`: API呼び出し
-- `@aws-amplify/auth`: Cognito認証
-- `aws-amplify`: Amplify設定
 
-#### 5.2 Cognito認証設定 (`frontend/src/lib/auth.ts`) ✅
+- `axios`: API 呼び出し
+- `@aws-amplify/auth`: Cognito 認証
+- `aws-amplify`: Amplify 設定
 
-AWS Amplify設定:
+#### 5.2 Cognito 認証設定 (`frontend/src/lib/auth.ts`) ✅
+
+AWS Amplify 設定:
+
 ```typescript
-import { Amplify } from 'aws-amplify';
-import { signIn, signOut, getCurrentUser, fetchAuthSession } from '@aws-amplify/auth';
+import { Amplify } from "aws-amplify";
+import {
+  signIn,
+  signOut,
+  getCurrentUser,
+  fetchAuthSession,
+} from "@aws-amplify/auth";
 
 Amplify.configure({
   Auth: {
@@ -532,32 +568,34 @@ Amplify.configure({
       userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID!,
       userPoolClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID!,
       region: process.env.NEXT_PUBLIC_AWS_REGION!,
-    }
-  }
+    },
+  },
 });
 
 export { signIn, signOut, getCurrentUser, fetchAuthSession };
 ```
 
 認証ヘルパー関数:
+
 - `login(email, password)`: ログイン処理
 - `logout()`: ログアウト処理
-- `getIdToken()`: API呼び出し用のIDトークン取得
+- `getIdToken()`: API 呼び出し用の ID トークン取得
 - `isAuthenticated()`: 認証状態チェック
 
 #### 5.3 ログインフォーム (`frontend/src/components/LoginForm.tsx`) ✅
 
 機能:
+
 - Email/パスワード入力
 - ログインボタン
 - エラーメッセージ表示
 - ログイン成功後、ホーム画面へリダイレクト
 
 ```typescript
-'use client';
-import { useState } from 'react';
-import { signIn } from '@/lib/auth';
-import { useRouter } from 'next/navigation';
+"use client";
+import { useState } from "react";
+import { signIn } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
   // Email, パスワード入力
@@ -569,15 +607,16 @@ export default function LoginForm() {
 #### 5.4 認証ガード (`frontend/src/components/AuthGuard.tsx`) ✅
 
 機能:
+
 - ページアクセス時に認証状態をチェック
 - 未認証の場合、ログイン画面へリダイレクト
 - 認証済みの場合、子コンポーネントを表示
 
 ```typescript
-'use client';
-import { useEffect, useState } from 'react';
-import { getCurrentUser } from '@/lib/auth';
-import { useRouter } from 'next/navigation';
+"use client";
+import { useEffect, useState } from "react";
+import { getCurrentUser } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 export default function AuthGuard({ children }) {
   // getCurrentUser()で認証チェック
@@ -590,12 +629,14 @@ export default function AuthGuard({ children }) {
 #### 5.5 ファイルアップロード (`frontend/src/components/FileUpload.tsx`) ✅
 
 機能:
-- JSONファイル選択
-- `/upload-url` APIで署名付きURL取得（**認証トークンをヘッダーに付与**）
-- S3へ直接アップロード（Lambdaを経由しない = コスト削減）
+
+- JSON ファイル選択
+- `/upload-url` API で署名付き URL 取得（**認証トークンをヘッダーに付与**）
+- S3 へ直接アップロード（Lambda を経由しない = コスト削減）
 - アップロード状態表示
 
-API呼び出し時の認証:
+API 呼び出し時の認証:
+
 ```typescript
 const token = await getIdToken();
 const { data } = await axios.get(
@@ -607,44 +648,46 @@ const { data } = await axios.get(
 #### 5.6 チャットインターフェース (`frontend/src/components/ChatInterface.tsx`) 🔄 後回し
 
 機能:
+
 - メッセージ履歴表示
 - ユーザー入力
-- `/chat` APIへPOSTリクエスト
+- `/chat` API へ POST リクエスト
 - ストリーミングレスポンス対応（オプション）
 - 質問例の表示:
-  - 「最も視聴したチャンネルトップ10は？」
-  - 「2024年に何本の動画を見ましたか？」
-  - 「最近1ヶ月の視聴傾向は？」
+  - 「最も視聴したチャンネルトップ 10 は？」
+  - 「2024 年に何本の動画を見ましたか？」
+  - 「最近 1 ヶ月の視聴傾向は？」
 
-API呼び出し時も同様に認証トークンをヘッダーに付与
+API 呼び出し時も同様に認証トークンをヘッダーに付与
 
 #### 5.7 ページ構成 ✅
 
-- `/login` (page.tsx): ログイン画面 - Cognito認証
+- `/login` (page.tsx): ログイン画面 - Cognito 認証
 - `/` (page.tsx): ホーム画面 - ファイルアップロード（認証必須）
 - `/chat` (page.tsx): チャット画面 - データ分析（認証必須）🔄 後回し
 
 ### Phase 6: デプロイ・テスト 🔥 優先
 
-#### 6.1 CDKデプロイ 🔥
+#### 6.1 CDK デプロイ 🔥
 
 ```bash
 cd cdk
-python -m venv .venv
-source .venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activatey
 pip install -r requirements.txt
 cdk bootstrap  # 初回のみ
 cdk deploy --all
 ```
 
 出力される値:
-- API GatewayのURL
-- S3バケット名
+
+- API Gateway の URL
+- S3 バケット名
 - Amplify App URL
 
-#### 6.2 Cognitoユーザー作成 🔥
+#### 6.2 Cognito ユーザー作成 🔥
 
-CDKデプロイ後、AWS CLIまたはコンソールでユーザー作成:
+CDK デプロイ後、AWS CLI またはコンソールでユーザー作成:
 
 ```bash
 # 自分用アカウント作成
@@ -666,33 +709,35 @@ aws cognito-idp admin-create-user \
 # 初回ログイン時にパスワード変更が必要
 ```
 
-または、CDKスタック内でカスタムリソース（Lambda）を使用して自動作成も可能
+または、CDK スタック内でカスタムリソース（Lambda）を使用して自動作成も可能
 
 #### 6.3 フロントエンド設定 🔥
 
-1. GitHubリポジトリにコードpush
-2. Amplify環境変数設定:
-   - `NEXT_PUBLIC_API_URL`: API GatewayのURL
-   - `NEXT_PUBLIC_COGNITO_USER_POOL_ID`: CognitoユーザープールID
-   - `NEXT_PUBLIC_COGNITO_CLIENT_ID`: CognitoクライアントID
+1. GitHub リポジトリにコード push
+2. Amplify 環境変数設定:
+   - `NEXT_PUBLIC_API_URL`: API Gateway の URL
+   - `NEXT_PUBLIC_COGNITO_USER_POOL_ID`: Cognito ユーザープール ID
+   - `NEXT_PUBLIC_COGNITO_CLIENT_ID`: Cognito クライアント ID
    - `NEXT_PUBLIC_AWS_REGION`: us-east-1（またはデプロイリージョン）
 3. 自動ビルド・デプロイ開始
 
 #### 6.4 初期テスト 🔥
 
 **優先テスト（データパイプライン）**:
+
 1. **ログインテスト**: demo@example.com でログイン確認
-2. サンプルYouTube履歴JSON作成（Google Takeoutから取得）
+2. サンプル YouTube 履歴 JSON 作成（Google Takeout から取得）
 3. フロントエンドからアップロード（認証済み状態で）
-   - 確認: S3パスに正しくuser_idが含まれているか
-4. CloudWatch Logsでジョブ実行確認
-5. Athenaコンソールでデータ確認
-   - 確認: user_idパーティションが正しく作成されているか
+   - 確認: S3 パスに正しく user_id が含まれているか
+4. CloudWatch Logs でジョブ実行確認
+5. Athena コンソールでデータ確認
+   - 確認: user_id パーティションが正しく作成されているか
 6. **別ユーザーでログイン**して、データ分離を確認
    - 確認: 他ユーザーのデータが見えないこと
 7. ログアウト機能のテスト
 
 **後回し（チャット機能テスト）**:
+
 - チャット画面で質問テスト（認証済み状態で）
   - 確認: 自分のデータのみが返ってくるか
 
@@ -728,32 +773,36 @@ aws cognito-idp admin-create-user \
 
 ### セキュリティ保証
 
-1. **アップロード時**: Lambda関数がCognito User IDを使用してS3パスを生成
+1. **アップロード時**: Lambda 関数が Cognito User ID を使用して S3 パスを生成
+
    - 他ユーザーのパスには書き込めない
 
-2. **クエリ時**: Lambda関数がCognito User IDでAthenaクエリをフィルタ
+2. **クエリ時**: Lambda 関数が Cognito User ID で Athena クエリをフィルタ
+
    - 他ユーザーのデータは取得できない
 
-3. **S3アクセス**: バケットポリシーでパブリックアクセスブロック
-   - 直接S3アクセスは不可
+3. **S3 アクセス**: バケットポリシーでパブリックアクセスブロック
 
-4. **期間限定**: 2日後に全データ自動削除
+   - 直接 S3 アクセスは不可
+
+4. **期間限定**: 2 日後に全データ自動削除
    - 検証用途に最適
 
 ## コスト最適化ポイント
 
-| 項目 | 最適化手法 | 効果 |
-|------|-----------|------|
-| データウェアハウス | ❌ Redshift → ✅ Athena | 月$50-100 → $0.05/10GB |
-| データ処理 | ❌ Glue ETL (2+ DPU) → ✅ Glue Python Shell (1 DPU) | 大幅削減 |
-| BI可視化 | ❌ QuickSight → ✅ チャットUI | $9/月 → $0 |
-| セキュリティ | ❌ AWS WAF → ✅ APIキー | $5/月 → $0 |
-| 定期実行 | ❌ EventBridge → ✅ 手動アップロード | 不要 |
-| Athenaクエリ | クエリ結果キャッシング | 再スキャン削減 |
-| S3ストレージ | ライフサイクルポリシー | 古いデータ削除 |
-| Lambda | 適切なメモリ設定 | 実行コスト削減 |
+| 項目               | 最適化手法                                          | 効果                   |
+| ------------------ | --------------------------------------------------- | ---------------------- |
+| データウェアハウス | ❌ Redshift → ✅ Athena                             | 月$50-100 → $0.05/10GB |
+| データ処理         | ❌ Glue ETL (2+ DPU) → ✅ Glue Python Shell (1 DPU) | 大幅削減               |
+| BI 可視化          | ❌ QuickSight → ✅ チャット UI                      | $9/月 → $0             |
+| セキュリティ       | ❌ AWS WAF → ✅ API キー                            | $5/月 → $0             |
+| 定期実行           | ❌ EventBridge → ✅ 手動アップロード                | 不要                   |
+| Athena クエリ      | クエリ結果キャッシング                              | 再スキャン削減         |
+| S3 ストレージ      | ライフサイクルポリシー                              | 古いデータ削除         |
+| Lambda             | 適切なメモリ設定                                    | 実行コスト削減         |
 
-**月額コスト見積もり**（個人利用・月100リクエスト想定）:
+**月額コスト見積もり**（個人利用・月 100 リクエスト想定）:
+
 - S3: $0.02
 - Lambda: $0.00（無料枠内）
 - Glue Python Shell: $0.22
@@ -765,58 +814,58 @@ aws cognito-idp admin-create-user \
 
 ## セキュリティ考慮事項
 
-1. **Cognito認証**: 全APIエンドポイントでJWTトークン検証必須
+1. **Cognito 認証**: 全 API エンドポイントで JWT トークン検証必須
 2. **ユーザーごとのデータ分離**:
-   - S3パスにCognito User IDを使用
-   - Lambda関数でUser IDを検証してS3パス生成
-   - AthenaクエリでUser IDフィルタリング必須
+   - S3 パスに Cognito User ID を使用
+   - Lambda 関数で User ID を検証して S3 パス生成
+   - Athena クエリで User ID フィルタリング必須
    - 他ユーザーのデータへのアクセスを完全にブロック
-3. **IAM最小権限の原則**: 各Lambda関数に必要最小限の権限のみ付与
-4. **S3バケットポリシー**: パブリックアクセスブロック有効
-5. **パスワードポリシー**: 最小8文字、大小英字・数字必須
-6. **環境変数**: シークレット情報は環境変数で管理（.envファイルは.gitignore）
-7. **CORS設定**: Amplifyドメインのみ許可
+3. **IAM 最小権限の原則**: 各 Lambda 関数に必要最小限の権限のみ付与
+4. **S3 バケットポリシー**: パブリックアクセスブロック有効
+5. **パスワードポリシー**: 最小 8 文字、大小英字・数字必須
+6. **環境変数**: シークレット情報は環境変数で管理（.env ファイルは.gitignore）
+7. **CORS 設定**: Amplify ドメインのみ許可
 8. **セルフサインアップ無効**: 管理者のみがユーザー作成可能
-9. **期間限定保存**: 2日後に自動削除でデータ漏洩リスク最小化（検証用）
+9. **期間限定保存**: 2 日後に自動削除でデータ漏洩リスク最小化（検証用）
 
 ## モニタリング・ログ
 
-- **CloudWatch Logs**: 全Lambda関数、Glueジョブのログ自動出力
-- **CloudWatch Metrics**: Lambda実行回数、エラー率、実行時間
-- **Athenaクエリ履歴**: クエリパフォーマンスの確認
+- **CloudWatch Logs**: 全 Lambda 関数、Glue ジョブのログ自動出力
+- **CloudWatch Metrics**: Lambda 実行回数、エラー率、実行時間
+- **Athena クエリ履歴**: クエリパフォーマンスの確認
 - **コストエクスプローラー**: 月次コスト監視
 
 ## 今後の拡張案
 
-1. **データビジュアライゼーション**: Chart.jsで視聴傾向グラフ表示
-2. **高度なクエリ生成**: BedrockのFunction Calling機能でAthenaクエリを動的生成
-3. **他のTakeoutデータ対応**: 検索履歴、位置情報など
+1. **データビジュアライゼーション**: Chart.js で視聴傾向グラフ表示
+2. **高度なクエリ生成**: Bedrock の Function Calling 機能で Athena クエリを動的生成
+3. **他の Takeout データ対応**: 検索履歴、位置情報など
 4. **レコメンデーション**: 視聴傾向から新チャンネル推薦
-5. **ユーザーごとのデータ分離**: S3パスにユーザーIDを含めて複数ユーザー対応
-6. **ストリーミングレスポンス**: Bedrock回答のリアルタイム表示
+5. **ユーザーごとのデータ分離**: S3 パスにユーザー ID を含めて複数ユーザー対応
+6. **ストリーミングレスポンス**: Bedrock 回答のリアルタイム表示
 
 ## 重要な実装ファイル（優先順）
 
-1. **`cdk/app.py`** - CDKエントリーポイント、全スタック統合
-2. **`cdk/stacks/storage_stack.py`** - S3バケット定義
-3. **`cdk/stacks/cognito_stack.py`** - Cognitoユーザープール（**新規追加**）
-4. **`cdk/stacks/glue_stack.py`** - Glueジョブ定義
-5. **`cdk/stacks/lambda_stack.py`** - Lambda関数デプロイ
+1. **`cdk/app.py`** - CDK エントリーポイント、全スタック統合
+2. **`cdk/stacks/storage_stack.py`** - S3 バケット定義
+3. **`cdk/stacks/cognito_stack.py`** - Cognito ユーザープール（**新規追加**）
+4. **`cdk/stacks/glue_stack.py`** - Glue ジョブ定義
+5. **`cdk/stacks/lambda_stack.py`** - Lambda 関数デプロイ
 6. **`cdk/stacks/api_stack.py`** - API Gateway + Cognito Authorizer（**更新**）
 7. **`glue_jobs/process_youtube_history.py`** - データ加工コアロジック
-8. **`lambdas/chat_api/handler.py`** - チャットAPI、Athena + Bedrock統合
-9. **`lambdas/shared/athena_client.py`** - Athenaクライアント + キャッシング
-10. **`lambdas/shared/bedrock_client.py`** - Bedrockクライアント
-11. **`frontend/src/lib/auth.ts`** - Cognito認証ヘルパー（**新規追加**）
-12. **`frontend/src/components/LoginForm.tsx`** - ログインUI（**新規追加**）
+8. **`lambdas/chat_api/handler.py`** - チャット API、Athena + Bedrock 統合
+9. **`lambdas/shared/athena_client.py`** - Athena クライアント + キャッシング
+10. **`lambdas/shared/bedrock_client.py`** - Bedrock クライアント
+11. **`frontend/src/lib/auth.ts`** - Cognito 認証ヘルパー（**新規追加**）
+12. **`frontend/src/components/LoginForm.tsx`** - ログイン UI（**新規追加**）
 13. **`frontend/src/components/AuthGuard.tsx`** - 認証ガード（**新規追加**）
-14. **`frontend/src/components/ChatInterface.tsx`** - チャットUI
-15. **`frontend/src/components/FileUpload.tsx`** - アップロードUI
+14. **`frontend/src/components/ChatInterface.tsx`** - チャット UI
+15. **`frontend/src/components/FileUpload.tsx`** - アップロード UI
 
 ## 参考資料
 
 - [AWS Glue Python Shell (コスト効率)](https://cloudchipr.com/blog/aws-glue-pricing)
 - [AWS Athena Partition Projection](https://aws.amazon.com/blogs/big-data/top-10-performance-tuning-tips-for-amazon-athena/)
-- [YouTube Takeout JSON構造](https://portmap.dtinit.org/articles/watch-history2.md/)
-- [AWS Bedrock Claude統合](https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-anthropic-claude-messages.html)
+- [YouTube Takeout JSON 構造](https://portmap.dtinit.org/articles/watch-history2.md/)
+- [AWS Bedrock Claude 統合](https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-anthropic-claude-messages.html)
 - [AWS CDK Python Examples](https://github.com/aws-samples/aws-cdk-examples/tree/master/python)
