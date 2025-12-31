@@ -205,8 +205,7 @@ def process_youtube_history(
     # DataFrameに変換
     df = pd.DataFrame(records)
 
-    # watched_atをタイムスタンプ文字列に変換（Parquet互換）
-    df['watched_at'] = df['watched_at'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    # watched_atはdatetime型のまま保存（Parquetはtimestamp型をネイティブサポート）
 
     # 出力パスを生成（user_idパーティションのみ）
     # 例: s3://jyoloyg-processed/processed/user-abc123/data.parquet

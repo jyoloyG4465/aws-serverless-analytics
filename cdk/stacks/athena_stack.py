@@ -103,8 +103,8 @@ class AthenaStack(Stack):
                         ),
                         glue.CfnTable.ColumnProperty(
                             name="watched_at",
-                            type="timestamp",
-                            comment="Watch timestamp",
+                            type="string",
+                            comment="Watch timestamp (temporarily string for compatibility)",
                         ),
                     ],
                     location=f"s3://{processed_bucket.bucket_name}/processed/",
