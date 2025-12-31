@@ -15,9 +15,10 @@ glue = boto3.client('glue')
 def lambda_handler(event, context):
     """
     S3イベントハンドラー
+    EventBridge形式とS3イベント通知形式の両方に対応
 
     Args:
-        event: S3イベント
+        event: S3イベントまたはEventBridgeイベント
         context: Lambda context
 
     Returns:
@@ -40,7 +41,17 @@ def lambda_handler(event, context):
     # S3イベントを処理
     processed_count = 0
 
-    for record in event.get('Records', []):
+    # EventBridge形式かS3イベント通知形式かを判定
+    if 'detail' in event and event.get('source') == 'aws.s3':
+        # EventBridge形式
+        print("Processing EventBridge event")
+        records = [{'s3': {'bucket': event['detail']['bucket'], 'object': event['detail']['object']}}]
+    else:
+        # S3イベント通知形式
+        print("Processing S3 event notification")
+        records = event.get('Records', [])
+
+    for record in records:
         try:
             # S3イベント情報を取得
             s3_info = record.get('s3', {})
