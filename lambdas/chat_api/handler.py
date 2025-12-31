@@ -17,6 +17,7 @@ from shared.bedrock_client import BedrockClient
 
 # 環境変数
 ATHENA_DATABASE = os.environ.get('ATHENA_DATABASE', 'youtube_analytics_db')
+ATHENA_WORKGROUP = os.environ.get('ATHENA_WORKGROUP', 'primary')
 ATHENA_OUTPUT_LOCATION = os.environ.get('ATHENA_OUTPUT_LOCATION')
 AWS_REGION = os.environ.get('AWS_REGION', 'ap-northeast-1')
 
@@ -68,6 +69,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         athena_client = AthenaClient(
             database=ATHENA_DATABASE,
             output_location=ATHENA_OUTPUT_LOCATION,
+            workgroup=ATHENA_WORKGROUP,
             region=AWS_REGION
         )
 

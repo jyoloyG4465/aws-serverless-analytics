@@ -129,7 +129,8 @@ class LambdaStack(Stack):
                     "athena:StopQueryExecution",
                 ],
                 resources=[
-                    f"arn:aws:athena:{self.region}:{self.account}:workgroup/{workgroup_name}"
+                    f"arn:aws:athena:{self.region}:{self.account}:workgroup/{workgroup_name}",
+                    f"arn:aws:athena:{self.region}:{self.account}:datacatalog/*",
                 ],
             )
         )
@@ -157,10 +158,24 @@ class LambdaStack(Stack):
         # Bedrock呼び出し権限（ap-northeast-1でClaude 3.5 Sonnet利用可能）
         self.chat_api_function.add_to_role_policy(
             iam.PolicyStatement(
-                actions=["bedrock:InvokeModel"],
-                resources=[
-                    f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-3-5-sonnet-20241022-v2:0"
+                actions=[
+                    "bedrock:InvokeModel",
+                    "bedrock:InvokeModelWithResponseStream"
                 ],
+                resources=[
+                    f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
+                ],
+            )
+        )
+
+        # AWS Marketplace権限（Bedrockモデルアクセスに必要）
+        self.chat_api_function.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "aws-marketplace:ViewSubscriptions",
+                    "aws-marketplace:Subscribe"
+                ],
+                resources=["*"],
             )
         )
 

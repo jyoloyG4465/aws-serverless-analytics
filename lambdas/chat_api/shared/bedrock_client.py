@@ -17,14 +17,14 @@ class BedrockClient:
     def __init__(
         self,
         region: str = 'ap-northeast-1',
-        model_id: str = 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+        model_id: str = 'anthropic.claude-3-5-sonnet-20240620-v1:0',
         max_tokens: int = 2000,
         temperature: float = 0.7
     ):
         """
         Args:
             region: AWS リージョン（ap-northeast-1 で Claude 3.5 Sonnet 利用可能）
-            model_id: Bedrock モデル ID
+            model_id: Bedrock モデル ID (ON_DEMAND対応版)
             max_tokens: 最大トークン数（コスト最適化）
             temperature: 生成のランダム性（0.0-1.0）
         """

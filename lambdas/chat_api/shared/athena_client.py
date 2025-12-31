@@ -25,17 +25,20 @@ class AthenaClient:
         self,
         database: str,
         output_location: str,
+        workgroup: str = 'primary',
         region: str = 'ap-northeast-1'
     ):
         """
         Args:
             database: Athena データベース名
             output_location: クエリ結果の出力先 S3 パス
+            workgroup: Athena ワークグループ名
             region: AWS リージョン
         """
         self.client = boto3.client('athena', region_name=region)
         self.database = database
         self.output_location = output_location
+        self.workgroup = workgroup
 
     def execute_query(
         self,
@@ -78,7 +81,8 @@ class AthenaClient:
             response = self.client.start_query_execution(
                 QueryString=query,
                 QueryExecutionContext={'Database': self.database},
-                ResultConfiguration={'OutputLocation': self.output_location}
+                ResultConfiguration={'OutputLocation': self.output_location},
+                WorkGroup=self.workgroup
             )
 
             query_execution_id = response['QueryExecutionId']
