@@ -30,6 +30,15 @@ class StorageStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,  # 開発環境用：スタック削除時にバケットも削除
             auto_delete_objects=True,  # 開発環境用：バケット削除時にオブジェクトも削除
             event_bridge_enabled=True,  # EventBridge通知を有効化（循環依存回避）
+            # CORS設定（署名付きURLを使ったブラウザからのアップロード用）
+            cors=[
+                s3.CorsRule(
+                    allowed_methods=[s3.HttpMethods.PUT, s3.HttpMethods.POST],
+                    allowed_origins=["*"],  # 本番環境ではAmplifyドメインに制限推奨
+                    allowed_headers=["*"],
+                    max_age=3000,
+                )
+            ],
             lifecycle_rules=[
                 s3.LifecycleRule(
                     id="DeleteAfter2Days",
