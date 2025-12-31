@@ -46,7 +46,7 @@ def lambda_handler(event, context):
     """
     Lambda handler
 
-    クエリパラメータ:
+    リクエストボディ (JSON):
         fileName: アップロードするファイル名
 
     レスポンス:
@@ -76,16 +76,29 @@ def lambda_handler(event, context):
         user_id = get_user_id_from_event(event)
         print(f"User ID: {user_id}")
 
-        # クエリパラメータからファイル名を取得
-        query_params = event.get('queryStringParameters') or {}
-        file_name = query_params.get('fileName')
+        # リクエストボディからファイル名を取得
+        body = event.get('body')
+        if not body:
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({
+                    'error': 'Request body is required'
+                })
+            }
+
+        # ボディがJSON文字列の場合はパース
+        if isinstance(body, str):
+            body = json.loads(body)
+
+        file_name = body.get('fileName')
 
         if not file_name:
             return {
                 'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({
-                    'error': 'fileName query parameter is required'
+                    'error': 'fileName is required in request body'
                 })
             }
 
