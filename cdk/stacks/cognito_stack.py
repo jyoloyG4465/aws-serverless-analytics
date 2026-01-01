@@ -83,7 +83,7 @@ class CognitoStack(Stack):
             # トークン有効期限
             access_token_validity=Duration.hours(1),
             id_token_validity=Duration.hours(1),
-            refresh_token_validity=Duration.days(30),
+            refresh_token_validity=Duration.days(7),
             # クライアントシークレット不要（パブリッククライアント）
             generate_secret=False,
         )
