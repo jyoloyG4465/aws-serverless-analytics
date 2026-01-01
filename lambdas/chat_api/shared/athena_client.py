@@ -285,11 +285,11 @@ def get_sample_queries(user_id: str) -> Dict[str, str]:
 
         'daily_watch_count': f"""
             SELECT
-                DATE(CAST(watched_at AS TIMESTAMP)) as watch_date,
+                DATE(watched_at) as watch_date,
                 COUNT(*) as count
             FROM youtube_watch_history
             WHERE user_id = '{user_id}'
-            GROUP BY DATE(CAST(watched_at AS TIMESTAMP))
+            GROUP BY DATE(watched_at)
             ORDER BY watch_date DESC
             LIMIT 30
         """
