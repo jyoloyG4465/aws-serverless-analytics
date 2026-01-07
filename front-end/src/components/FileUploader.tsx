@@ -8,69 +8,78 @@
 import { useState, ChangeEvent, FormEvent } from 'react';
 import { getUploadUrl, uploadToS3 } from '@/lib/api';
 
-export default function FileUpload() {
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+export default function FileUploader() {
+  const [selectedFile, updateSelectedFile] = useState<File | null>(null);
+  const [uploading, updateUploadingStatus] = useState(false);
+  const [progress, updateUploadProgress] = useState(0);
+  const [message, updateStatusMessage] = useState('');
+  const [error, updateErrorMessage] = useState('');
+
+  // ヘルパー関数: メッセージをクリア
+  const clearMessages = () => {
+    updateErrorMessage('');
+    updateStatusMessage('');
+  };
+
+  // ヘルパー関数: アップロード開始時の初期化
+  const initializeUpload = () => {
+    updateUploadingStatus(true);
+    updateUploadProgress(0);
+    clearMessages();
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      // JSONファイルのみ受け付ける
-      if (!selectedFile.name.endsWith('.json')) {
-        setError('JSONファイルのみアップロード可能です');
-        setFile(null);
+      // watch-history.jsonのみ受け付ける
+      if (selectedFile.name !== 'watch-history.json') {
+        updateErrorMessage('watch-history.json のみアップロード可能です');
+        updateSelectedFile(null);
         return;
       }
 
-      setFile(selectedFile);
-      setError('');
-      setMessage('');
+      updateSelectedFile(selectedFile);
+      clearMessages();
     }
   };
 
   const handleUpload = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!file) {
-      setError('ファイルを選択してください');
+    if (!selectedFile) {
+      updateErrorMessage('ファイルを選択してください');
       return;
     }
 
-    setUploading(true);
-    setProgress(0);
-    setError('');
-    setMessage('');
+    initializeUpload();
 
     try {
       // 1. 署名付きURLを取得
-      setProgress(25);
-      setMessage('アップロードURLを取得中...');
-      const uploadData = await getUploadUrl(file.name);
+      updateUploadProgress(25);
+      updateStatusMessage('アップロードURLを取得中...');
+      const uploadData = await getUploadUrl(selectedFile.name);
 
       // 2. S3に直接アップロード
-      setProgress(50);
-      setMessage('ファイルをアップロード中...');
-      await uploadToS3(uploadData.uploadUrl, file);
+      updateUploadProgress(50);
+      updateStatusMessage('ファイルをアップロード中...');
+      await uploadToS3(uploadData.uploadUrl, selectedFile);
 
       // 3. 完了
-      setProgress(100);
-      setMessage(`アップロード完了しました。データ処理が開始されます。\nS3パス: ${uploadData.key}`);
+      updateUploadProgress(100);
+      updateStatusMessage(`アップロード完了しました。データ処理が開始されます。\nS3パス: ${uploadData.key}`);
 
       // フォームをリセット
-      setFile(null);
+      updateSelectedFile(null);
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) {
         fileInput.value = '';
       }
     } catch (err) {
       console.error('Upload error:', err);
-      setError(err instanceof Error ? err.message : 'アップロードに失敗しました');
-      setProgress(0);
+      updateErrorMessage(err instanceof Error ? err.message : 'アップロードに失敗しました');
+      updateUploadProgress(0);
     } finally {
-      setUploading(false);
+      updateUploadingStatus(false);
     }
   };
 
@@ -83,7 +92,7 @@ export default function FileUpload() {
       <div className="mb-6 p-4 bg-blue-50 rounded-md">
         <h3 className="text-sm font-medium text-blue-800 mb-2">使い方</h3>
         <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
-          <li>Google Takeoutから取得したYouTube履歴JSONファイルを選択</li>
+          <li>Google Takeoutから取得した watch-history.json を選択</li>
           <li>アップロードボタンをクリック</li>
           <li>データ処理が自動的に開始されます（数分かかる場合があります）</li>
         </ol>
@@ -106,9 +115,9 @@ export default function FileUpload() {
             disabled={uploading}
             className="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
           />
-          {file && (
+          {selectedFile && (
             <p className="mt-2 text-sm text-gray-600">
-              選択されたファイル: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+              選択されたファイル: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
             </p>
           )}
         </div>
@@ -148,7 +157,7 @@ export default function FileUpload() {
         <div>
           <button
             type="submit"
-            disabled={!file || uploading}
+            disabled={!selectedFile || uploading}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {uploading ? (
@@ -169,7 +178,7 @@ export default function FileUpload() {
       <div className="mt-6 p-4 bg-gray-50 rounded-md">
         <h3 className="text-sm font-medium text-gray-700 mb-2">注意事項</h3>
         <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-          <li>JSONファイルのみアップロード可能です</li>
+          <li>watch-history.json のみアップロード可能です</li>
           <li>アップロードされたデータは2日後に自動削除されます</li>
           <li>データはユーザーごとに完全に分離されています</li>
         </ul>

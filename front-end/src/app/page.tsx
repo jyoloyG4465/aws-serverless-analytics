@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
-import FileUpload from '@/components/FileUpload';
+import FileUploader from '@/components/FileUploader';
 import { logoutFromCognito, getCognitoUserInfo } from '@/lib/auth';
 
 function HomePage() {
@@ -78,7 +78,7 @@ function HomePage() {
 
       {/* メインコンテンツ */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <FileUpload />
+        <FileUploader />
 
         {/* 説明セクション */}
         <div className="mt-8 max-w-2xl mx-auto">
