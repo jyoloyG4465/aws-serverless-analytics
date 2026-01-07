@@ -81,7 +81,7 @@ export async function login(email: string, password: string) {
 /**
  * ログアウト
  */
-export async function logout() {
+export async function logoutFromCognito() {
   try {
     await amplifySignOut();
     return {
@@ -112,7 +112,7 @@ export async function isAuthenticated(): Promise<boolean> {
 /**
  * 現在のユーザー情報を取得
  */
-export async function getUser() {
+export async function getCognitoUserInfo() {
   try {
     const user = await getCurrentUser();
     return {

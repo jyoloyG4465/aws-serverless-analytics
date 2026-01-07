@@ -5,12 +5,12 @@
  * 認証が必要
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
 import ChatInterface from '@/components/ChatInterface';
-import { logout, getUser } from '@/lib/auth';
+import { logoutFromCognito, getCognitoUserInfo } from '@/lib/auth';
 
 function ChatPage() {
   const router = useRouter();
@@ -18,19 +18,19 @@ function ChatPage() {
   const [loadingUser, setLoadingUser] = useState(true);
 
   // ユーザー情報を取得
-  useState(() => {
-    const fetchUser = async () => {
-      const result = await getUser();
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const result = await getCognitoUserInfo();
       if (result.success && result.user) {
         setUsername(result.user.username);
       }
       setLoadingUser(false);
     };
-    fetchUser();
-  });
+    fetchUserInfo();
+  }, []);
 
   const handleLogout = async () => {
-    const result = await logout();
+    const result = await logoutFromCognito();
     if (result.success) {
       router.push('/login');
     }
