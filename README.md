@@ -64,7 +64,7 @@ aws-serverless-analytics/
 │   ├── chat_api/           # チャットAPI
 │   └── upload_presigned/   # S3署名付きURL生成
 ├── glue_jobs/              # Glueデータ処理スクリプト
-├── frontend/               # Next.jsフロントエンド
+├── front-end/              # Next.jsフロントエンド
 └── docs/                   # ドキュメント
 ```
 
@@ -113,7 +113,7 @@ aws cognito-idp admin-create-user \
 ### 4. フロントエンド設定
 
 ```bash
-cd frontend
+cd front-end
 npm install
 
 # 環境変数を設定（AmplifyまたはVercel）
