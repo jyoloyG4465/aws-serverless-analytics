@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
 /**
  * チャットページ（AI分析画面）
  * 認証が必要
  */
 
-import AuthGuard from '@/components/AuthGuard';
-import Header from '@/components/Header';
-import ChatInterface from '@/components/ChatInterface';
-import ChatDescription from '@/components/ChatDescription';
+import AuthGuard from "@/app/shared/components/AuthGuard";
+import Header from "@/app/shared/components/Header";
+import ChatInterface from "./components/ChatInterface";
+import ChatDescription from "./components/ChatDescription";
 
 function ChatPage() {
   return (

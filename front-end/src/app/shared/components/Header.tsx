@@ -21,9 +21,9 @@ export default function Header() {
           </h1>
           <nav className="flex gap-4">
             <Link
-              href="/"
+              href="/home"
               className={`text-sm font-medium ${
-                pathname === "/"
+                pathname === "/home"
                   ? "text-blue-600 border-b-2 border-blue-600"
                   : "text-gray-600 hover:text-gray-900 transition-colors"
               }`}
