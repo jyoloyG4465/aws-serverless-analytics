@@ -34,7 +34,6 @@ export interface ChatRequest {
 
 export interface ChatResponse {
   answer: string;
-  data?: unknown;
 }
 
 // エラーレスポンス
