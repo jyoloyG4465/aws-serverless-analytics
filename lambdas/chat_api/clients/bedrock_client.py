@@ -6,9 +6,11 @@ Bedrock クライアント - Claude 3.5 Sonnet による AI 分析
 - YouTube 閲覧履歴データの分析
 - エラーハンドリングとリトライ
 """
-import boto3
+
 import json
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
+import boto3
 
 
 class BedrockClient:
@@ -16,10 +18,10 @@ class BedrockClient:
 
     def __init__(
         self,
-        region: str = 'ap-northeast-1',
-        model_id: str = 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+        region: str = "ap-northeast-1",
+        model_id: str = "anthropic.claude-3-5-sonnet-20240620-v1:0",
         max_tokens: int = 2000,
-        temperature: float = 0.7
+        temperature: float = 0.7,
     ):
         """
         Args:
@@ -28,7 +30,7 @@ class BedrockClient:
             max_tokens: 最大トークン数（コスト最適化）
             temperature: 生成のランダム性（0.0-1.0）
         """
-        self.client = boto3.client('bedrock-runtime', region_name=region)
+        self.client = boto3.client("bedrock-runtime", region_name=region)
         self.model_id = model_id
         self.max_tokens = max_tokens
         self.temperature = temperature
@@ -37,7 +39,7 @@ class BedrockClient:
         self,
         question: str,
         data: List[Dict[str, Any]],
-        system_prompt: Optional[str] = None
+        system_prompt: Optional[str] = None,
     ) -> str:
         """
         YouTube 閲覧履歴データを分析して質問に回答
@@ -71,26 +73,23 @@ class BedrockClient:
             # Bedrock API 呼び出し
             response = self.client.invoke_model(
                 modelId=self.model_id,
-                body=json.dumps({
-                    "anthropic_version": "bedrock-2023-05-31",
-                    "max_tokens": self.max_tokens,
-                    "temperature": self.temperature,
-                    "system": system_prompt,
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": user_prompt
-                        }
-                    ]
-                })
+                body=json.dumps(
+                    {
+                        "anthropic_version": "bedrock-2023-05-31",
+                        "max_tokens": self.max_tokens,
+                        "temperature": self.temperature,
+                        "system": system_prompt,
+                        "messages": [{"role": "user", "content": user_prompt}],
+                    }
+                ),
             )
 
             # レスポンスパース
-            response_body = json.loads(response['body'].read())
+            response_body = json.loads(response["body"].read())
 
             # Claude の回答を取得
-            if 'content' in response_body and len(response_body['content']) > 0:
-                answer = response_body['content'][0]['text']
+            if "content" in response_body and len(response_body["content"]) > 0:
+                answer = response_body["content"][0]["text"]
                 print(f"Response received: {len(answer)} characters")
                 return answer
             else:
@@ -100,11 +99,7 @@ class BedrockClient:
             print(f"Bedrock API error: {str(e)}")
             raise
 
-    def _build_user_prompt(
-        self,
-        question: str,
-        data: List[Dict[str, Any]]
-    ) -> str:
+    def _build_user_prompt(self, question: str, data: List[Dict[str, Any]]) -> str:
         """
         ユーザープロンプトを構築
 
@@ -134,6 +129,7 @@ class BedrockClient:
 
 質問: {question}
 
+
 データに基づいた具体的な回答を提供してください。
 数値やチャンネル名など、データから読み取れる情報を含めてください。"""
 
@@ -143,7 +139,7 @@ class BedrockClient:
         self,
         message: str,
         conversation_history: Optional[List[Dict[str, str]]] = None,
-        system_prompt: Optional[str] = None
+        system_prompt: Optional[str] = None,
     ) -> str:
         """
         会話形式でチャット（履歴対応）
@@ -163,27 +159,26 @@ class BedrockClient:
 
         # 会話履歴を構築
         messages = conversation_history or []
-        messages.append({
-            "role": "user",
-            "content": message
-        })
+        messages.append({"role": "user", "content": message})
 
         try:
             response = self.client.invoke_model(
                 modelId=self.model_id,
-                body=json.dumps({
-                    "anthropic_version": "bedrock-2023-05-31",
-                    "max_tokens": self.max_tokens,
-                    "temperature": self.temperature,
-                    "system": system_prompt,
-                    "messages": messages
-                })
+                body=json.dumps(
+                    {
+                        "anthropic_version": "bedrock-2023-05-31",
+                        "max_tokens": self.max_tokens,
+                        "temperature": self.temperature,
+                        "system": system_prompt,
+                        "messages": messages,
+                    }
+                ),
             )
 
-            response_body = json.loads(response['body'].read())
+            response_body = json.loads(response["body"].read())
 
-            if 'content' in response_body and len(response_body['content']) > 0:
-                return response_body['content'][0]['text']
+            if "content" in response_body and len(response_body["content"]) > 0:
+                return response_body["content"][0]["text"]
             else:
                 raise Exception("No content in Bedrock response")
 
