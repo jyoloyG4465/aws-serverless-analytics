@@ -169,7 +169,7 @@ def process_youtube_history(input_path: str, output_path: str, user_id: str) -> 
         if subtitles and len(subtitles) > 0:
             first_subtitle = subtitles[0]
             if isinstance(first_subtitle, dict):
-                channel_name = first_subtitle.get("name", "")
+                channel_name = first_subtitle.get("name", "不明")
                 channel_url = first_subtitle.get("url", "")
                 channel_id = extract_channel_id(channel_url)
 
