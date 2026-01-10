@@ -1,4 +1,4 @@
-import { RefObject } from "react";
+import { RefObject, useState, useEffect } from "react";
 
 interface Message {
   role: "user" | "assistant";
@@ -19,6 +19,65 @@ const sampleQuestions = [
   "最近1ヶ月の視聴傾向を教えて",
   "日別の視聴数の推移を教えて",
 ];
+
+// タイプライターフック
+function useTypewriter(text: string, speed: number = 15, enabled: boolean = true) {
+  const [displayedText, setDisplayedText] = useState(enabled ? "" : text);
+  const [isComplete, setIsComplete] = useState(!enabled);
+
+  useEffect(() => {
+    if (!enabled) {
+      setDisplayedText(text);
+      setIsComplete(true);
+      return;
+    }
+
+    setDisplayedText("");
+    setIsComplete(false);
+    let index = 0;
+
+    const timer = setInterval(() => {
+      if (index < text.length) {
+        setDisplayedText(text.slice(0, index + 1));
+        index++;
+      } else {
+        clearInterval(timer);
+        setIsComplete(true);
+      }
+    }, speed);
+
+    return () => clearInterval(timer);
+  }, [text, speed, enabled]);
+
+  return { displayedText, isComplete };
+}
+
+// アシスタントメッセージコンポーネント
+function AssistantMessage({
+  content,
+  timestamp,
+  isLatest,
+}: {
+  content: string;
+  timestamp: Date;
+  isLatest: boolean;
+}) {
+  const { displayedText } = useTypewriter(content, 15, isLatest);
+
+  return (
+    <div className="flex justify-start">
+      <div className="max-w-[80%] rounded-lg px-4 py-3 bg-white text-gray-800 border border-gray-200">
+        <p className="text-sm whitespace-pre-wrap">{displayedText}</p>
+        <p className="text-xs mt-2 text-gray-500">
+          {timestamp.toLocaleTimeString("ja-JP", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function ChatMessages({
   messages,
@@ -73,34 +132,35 @@ export default function ChatMessages({
             </div>
           </div>
         ) : (
-          messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${
-                message.role === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                  message.role === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-white text-gray-800 border border-gray-200"
-                }`}
-              >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                <p
-                  className={`text-xs mt-2 ${
-                    message.role === "user" ? "text-blue-100" : "text-gray-500"
-                  }`}
-                >
-                  {message.timestamp.toLocaleTimeString("ja-JP", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
+          messages.map((message, index) => {
+            const isLatestAssistant =
+              message.role === "assistant" && index === messages.length - 1;
+
+            if (message.role === "assistant") {
+              return (
+                <AssistantMessage
+                  key={index}
+                  content={message.content}
+                  timestamp={message.timestamp}
+                  isLatest={isLatestAssistant}
+                />
+              );
+            }
+
+            return (
+              <div key={index} className="flex justify-end">
+                <div className="max-w-[80%] rounded-lg px-4 py-3 bg-blue-600 text-white">
+                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <p className="text-xs mt-2 text-blue-100">
+                    {message.timestamp.toLocaleTimeString("ja-JP", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
 
         {/* ローディング表示 */}
