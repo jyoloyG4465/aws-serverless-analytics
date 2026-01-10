@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Aws serverless analytics",
+  title: "Youtube Analytics",
 };
 
 export default function RootLayout({
