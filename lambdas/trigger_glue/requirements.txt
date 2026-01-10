@@ -1,2 +1,0 @@
-# Lambda trigger-glue 依存関係
-# boto3 は Lambda 環境に標準で含まれているため、外部依存なし

@@ -9,6 +9,8 @@ import os
 import json
 import boto3
 
+from shared.response import success, error
+
 glue = boto3.client('glue')
 
 
@@ -31,12 +33,10 @@ def lambda_handler(event, context):
     output_bucket = os.environ.get('OUTPUT_BUCKET')
 
     if not glue_job_name or not output_bucket:
-        error_msg = "Missing required environment variables: GLUE_JOB_NAME or OUTPUT_BUCKET"
-        print(f"ERROR: {error_msg}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': error_msg})
-        }
+        return error(
+            "Missing required environment variables: GLUE_JOB_NAME or OUTPUT_BUCKET",
+            500
+        )
 
     # S3イベントを処理
     processed_count = 0
@@ -94,14 +94,14 @@ def lambda_handler(event, context):
             )
 
             job_run_id = response.get('JobRunId')
-            print(f"✅ Started Glue job for user {user_id}: {job_run_id}")
+            print(f"Started Glue job for user {user_id}: {job_run_id}")
             print(f"   Input: {input_path}")
             print(f"   Output: s3://{output_bucket}/processed/{user_id}/")
 
             processed_count += 1
 
         except Exception as e:
-            print(f"❌ Error processing record: {str(e)}")
+            print(f"Error processing record: {str(e)}")
             import traceback
             traceback.print_exc()
             # エラーがあっても他のレコードの処理を続行
@@ -109,10 +109,7 @@ def lambda_handler(event, context):
 
     print(f"Processed {processed_count} file(s)")
 
-    return {
-        'statusCode': 200,
-        'body': json.dumps({
-            'message': f'Successfully processed {processed_count} file(s)',
-            'processed_count': processed_count
-        })
-    }
+    return success({
+        'message': f'Successfully processed {processed_count} file(s)',
+        'processed_count': processed_count
+    })

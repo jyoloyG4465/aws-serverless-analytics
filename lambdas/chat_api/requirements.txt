@@ -1,5 +1,0 @@
-# Lambda chat-api dependencies
-# boto3 は Lambda 環境に標準で含まれるため、明示的な指定は不要
-# ただし、ローカルテスト用に記載
-
-boto3>=1.28.0

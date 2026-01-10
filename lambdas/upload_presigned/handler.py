@@ -10,6 +10,8 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 
+from shared.response import success, error
+
 s3 = boto3.client('s3')
 
 
@@ -58,14 +60,6 @@ def lambda_handler(event, context):
     """
     print(f"Received event: {json.dumps(event)}")
 
-    # CORS対応のレスポンスヘッダー
-    headers = {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    }
-
     try:
         # 環境変数を取得
         raw_bucket = os.environ.get('RAW_BUCKET')
@@ -79,13 +73,7 @@ def lambda_handler(event, context):
         # リクエストボディからファイル名を取得
         body = event.get('body')
         if not body:
-            return {
-                'statusCode': 400,
-                'headers': headers,
-                'body': json.dumps({
-                    'error': 'Request body is required'
-                })
-            }
+            return error('Request body is required', 400)
 
         # ボディがJSON文字列の場合はパース
         if isinstance(body, str):
@@ -94,23 +82,11 @@ def lambda_handler(event, context):
         file_name = body.get('fileName')
 
         if not file_name:
-            return {
-                'statusCode': 400,
-                'headers': headers,
-                'body': json.dumps({
-                    'error': 'fileName is required in request body'
-                })
-            }
+            return error('fileName is required in request body', 400)
 
         # ファイル名のバリデーション（基本的なチェック）
         if not file_name.endswith('.json'):
-            return {
-                'statusCode': 400,
-                'headers': headers,
-                'body': json.dumps({
-                    'error': 'Only .json files are supported'
-                })
-            }
+            return error('Only .json files are supported', 400)
 
         # S3オブジェクトキーを生成
         # パス: raw/{user_id}/{filename}
@@ -131,54 +107,26 @@ def lambda_handler(event, context):
             HttpMethod='PUT'
         )
 
-        print(f"✅ Generated presigned URL for s3://{raw_bucket}/{object_key}")
+        print(f"Generated presigned URL for s3://{raw_bucket}/{object_key}")
 
-        # レスポンス
-        return {
-            'statusCode': 200,
-            'headers': headers,
-            'body': json.dumps({
-                'uploadUrl': presigned_url,
-                'key': object_key,
-                'bucket': raw_bucket,
-                'expiresIn': expires_in,
-                'message': f'Upload your file to the provided URL within {expires_in} seconds'
-            })
-        }
+        return success({
+            'uploadUrl': presigned_url,
+            'key': object_key,
+            'bucket': raw_bucket,
+            'expiresIn': expires_in,
+            'message': f'Upload your file to the provided URL within {expires_in} seconds'
+        })
 
     except ValueError as e:
-        # バリデーションエラー
         print(f"Validation error: {str(e)}")
-        return {
-            'statusCode': 400,
-            'headers': headers,
-            'body': json.dumps({
-                'error': str(e)
-            })
-        }
+        return error(str(e), 400)
 
     except ClientError as e:
-        # AWS APIエラー
         print(f"AWS error: {str(e)}")
-        return {
-            'statusCode': 500,
-            'headers': headers,
-            'body': json.dumps({
-                'error': 'Failed to generate presigned URL',
-                'details': str(e)
-            })
-        }
+        return error('Failed to generate presigned URL', 500, str(e))
 
     except Exception as e:
-        # その他のエラー
         print(f"Unexpected error: {str(e)}")
         import traceback
         traceback.print_exc()
-        return {
-            'statusCode': 500,
-            'headers': headers,
-            'body': json.dumps({
-                'error': 'Internal server error',
-                'details': str(e)
-            })
-        }
+        return error('Internal server error', 500, str(e))

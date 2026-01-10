@@ -11,8 +11,9 @@ import json
 import os
 from typing import Dict, Any
 
-from shared.athena_client import AthenaClient, get_sample_queries
-from shared.bedrock_client import BedrockClient
+from clients.athena_client import AthenaClient, get_sample_queries
+from clients.bedrock_client import BedrockClient
+from shared.response import success, error, options
 
 
 # 環境変数
@@ -20,14 +21,6 @@ ATHENA_DATABASE = os.environ.get('ATHENA_DATABASE', 'youtube_analytics_db')
 ATHENA_WORKGROUP = os.environ.get('ATHENA_WORKGROUP', 'primary')
 ATHENA_OUTPUT_LOCATION = os.environ.get('ATHENA_OUTPUT_LOCATION')
 AWS_REGION = os.environ.get('AWS_REGION', 'ap-northeast-1')
-
-# CORS ヘッダー
-CORS_HEADERS = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',  # 本番環境では Amplify ドメインに制限推奨
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-    'Access-Control-Allow-Methods': 'POST,OPTIONS'
-}
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -45,11 +38,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     # OPTIONS リクエスト（CORS プリフライト）
     if event.get('httpMethod') == 'OPTIONS':
-        return {
-            'statusCode': 200,
-            'headers': CORS_HEADERS,
-            'body': ''
-        }
+        return options()
 
     try:
         # Cognito User ID を取得
@@ -61,7 +50,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         question = body.get('question', '').strip()
 
         if not question:
-            return error_response('Question is required', 400)
+            return error('Question is required', 400)
 
         print(f"Question: {question}")
 
@@ -94,21 +83,16 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             data=data
         )
 
-        # 成功レスポンス
-        return {
-            'statusCode': 200,
-            'headers': CORS_HEADERS,
-            'body': json.dumps({
-                'answer': answer,
-                'data_count': len(data)
-            }, ensure_ascii=False)
-        }
+        return success({
+            'answer': answer,
+            'data_count': len(data)
+        })
 
     except Exception as e:
         print(f"Error: {str(e)}")
         import traceback
         traceback.print_exc()
-        return error_response(f"Internal server error: {str(e)}", 500)
+        return error(f"Internal server error: {str(e)}", 500)
 
 
 def get_user_id(event: Dict[str, Any]) -> str:
@@ -166,23 +150,3 @@ def select_query(question: str, user_id: str) -> str:
         # デフォルト: 最近の履歴を返す
         print("No keyword match, using default query (recent history)")
         return queries['recent_history']
-
-
-def error_response(message: str, status_code: int = 400) -> Dict[str, Any]:
-    """
-    エラーレスポンスを生成
-
-    Args:
-        message: エラーメッセージ
-        status_code: HTTP ステータスコード
-
-    Returns:
-        API Gateway レスポンス
-    """
-    return {
-        'statusCode': status_code,
-        'headers': CORS_HEADERS,
-        'body': json.dumps({
-            'error': message
-        }, ensure_ascii=False)
-    }

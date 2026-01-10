@@ -35,6 +35,16 @@ class LambdaStack(Stack):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        # 共通 Lambda Layer（レスポンスヘルパーなど）
+        self.shared_layer = lambda_.LayerVersion(
+            self,
+            "SharedLayer",
+            layer_version_name="youtube-analytics-shared",
+            code=lambda_.Code.from_asset("../lambdas/shared"),
+            compatible_runtimes=[lambda_.Runtime.PYTHON_3_11],
+            description="Shared utilities for Lambda functions",
+        )
+
         # 1. Trigger Glue Lambda関数
         # ロググループを明示的に作成（cdk destroyで自動削除されるように）
         trigger_glue_log_group = logs.LogGroup(
@@ -52,6 +62,7 @@ class LambdaStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="handler.lambda_handler",
             code=lambda_.Code.from_asset("../lambdas/trigger_glue"),
+            layers=[self.shared_layer],
             timeout=Duration.seconds(30),
             memory_size=128,
             environment={
@@ -108,6 +119,7 @@ class LambdaStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="handler.lambda_handler",
             code=lambda_.Code.from_asset("../lambdas/chat_api"),
+            layers=[self.shared_layer],
             timeout=Duration.seconds(29),  # API Gateway制限
             memory_size=512,
             environment={
@@ -196,6 +208,7 @@ class LambdaStack(Stack):
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="handler.lambda_handler",
             code=lambda_.Code.from_asset("../lambdas/upload_presigned"),
+            layers=[self.shared_layer],
             timeout=Duration.seconds(10),
             memory_size=128,
             environment={

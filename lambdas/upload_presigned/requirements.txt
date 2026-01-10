@@ -1,2 +1,1 @@
-# Lambda upload-presigned 依存関係
-# boto3, botocore は Lambda 環境に標準で含まれているため、外部依存なし
+
