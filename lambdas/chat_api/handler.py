@@ -1,152 +1,180 @@
 """
-Athena + Bedrock 統合チャット API Lambda 関数
+Athena + Bedrock + RAG 統合チャット API Lambda 関数
 
 機能:
 - Cognito User ID によるデータ分離
-- キーワードマッチングによる Athena クエリ選択
+- ハイブリッドルーティング（Athena or RAG）
 - Bedrock (Claude 3.5 Sonnet) による AI 分析
 - CORS 対応
 """
+
 import json
 import os
-from typing import Dict, Any
+from typing import Any, Dict, Optional, Tuple
 
 from clients.athena_client import AthenaClient, get_sample_queries
 from clients.bedrock_client import BedrockClient
-from shared.response import success, error, options
-
+from clients.rag_client import RAGClient, format_rag_results
+from shared.response import error, options, success
 
 # 環境変数
-ATHENA_DATABASE = os.environ.get('ATHENA_DATABASE', 'youtube_analytics_db')
-ATHENA_WORKGROUP = os.environ.get('ATHENA_WORKGROUP', 'primary')
-ATHENA_OUTPUT_LOCATION = os.environ.get('ATHENA_OUTPUT_LOCATION')
-AWS_REGION = os.environ.get('AWS_REGION', 'ap-northeast-1')
+ATHENA_DATABASE = os.environ.get("ATHENA_DATABASE", "youtube_analytics_db")
+ATHENA_WORKGROUP = os.environ.get("ATHENA_WORKGROUP", "primary")
+ATHENA_OUTPUT_LOCATION = os.environ.get("ATHENA_OUTPUT_LOCATION")
+VECTORS_BUCKET = os.environ.get("VECTORS_BUCKET")
+AWS_REGION = os.environ.get("AWS_REGION", "ap-northeast-1")
+
+
+# クエリテンプレートのキーワードマッピング
+QUERY_KEYWORDS = {
+    "most_watched_channels": [
+        "most watched",
+        "最も見",
+        "一番見",
+        "よく見",
+        "top",
+        "お気に入り",
+        "favorite",
+    ],
+    "total_videos": [
+        "total",
+        "合計",
+        "全部",
+        "何本",
+        "何件",
+        "how many",
+        "いくつ",
+        "数",
+    ],
+    "recent_history": ["recent", "最近", "直近", "latest", "この前", "昨日", "今日"],
+    "daily_watch_count": ["daily", "毎日", "日別", "推移", "傾向", "trend", "グラフ"],
+}
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    """
-    Lambda handler
-
-    Args:
-        event: API Gateway イベント
-        context: Lambda コンテキスト
-
-    Returns:
-        API Gateway レスポンス
-    """
+    """Lambda handler"""
     print(f"Event: {json.dumps(event)}")
 
-    # OPTIONS リクエスト（CORS プリフライト）
-    if event.get('httpMethod') == 'OPTIONS':
+    if event.get("httpMethod") == "OPTIONS":
         return options()
 
     try:
-        # Cognito User ID を取得
         user_id = get_user_id(event)
         print(f"User ID: {user_id}")
 
-        # リクエストボディをパース
-        body = json.loads(event.get('body', '{}'))
-        question = body.get('question', '').strip()
+        body = json.loads(event.get("body", "{}"))
+        question = body.get("question", "").strip()
 
         if not question:
-            return error('Question is required', 400)
+            return error("Question is required", 400)
 
         print(f"Question: {question}")
 
-        # Athena クライアント初期化
-        athena_client = AthenaClient(
-            database=ATHENA_DATABASE,
-            output_location=ATHENA_OUTPUT_LOCATION,
-            workgroup=ATHENA_WORKGROUP,
-            region=AWS_REGION
-        )
-
-        # クエリ選択（キーワードマッチング）
-        query = select_query(question, user_id)
-        print(f"Selected query type: {query[:100]}...")
-
-        # Athena クエリ実行
-        data = athena_client.execute_query(query, use_cache=True, timeout=25)
-        print(f"Query returned {len(data)} rows")
+        # ルーティング判定
+        query_type = detect_query_type(question)
+        print(f"Query type: {query_type}")
 
         # Bedrock クライアント初期化
         bedrock_client = BedrockClient(
-            region=AWS_REGION,
-            max_tokens=2000,
-            temperature=0.7
+            region=AWS_REGION, max_tokens=2000, temperature=0.7
         )
 
-        # AI 分析
-        answer = bedrock_client.analyze_youtube_data(
-            question=question,
-            data=data
-        )
+        if query_type:
+            # Athenaテンプレート使用
+            answer, data_count = handle_athena_query(
+                question, user_id, query_type, bedrock_client
+            )
+            source = "athena"
+        else:
+            # RAG検索使用
+            answer, data_count = handle_rag_query(question, user_id, bedrock_client)
+            source = "rag"
 
-        return success({
-            'answer': answer,
-            'data_count': len(data)
-        })
+        return success({"answer": answer, "data_count": data_count, "source": source})
 
     except Exception as e:
         print(f"Error: {str(e)}")
         import traceback
+
         traceback.print_exc()
         return error(f"Internal server error: {str(e)}", 500)
 
 
-def get_user_id(event: Dict[str, Any]) -> str:
+def detect_query_type(question: str) -> Optional[str]:
     """
-    API Gateway イベントから Cognito User ID を取得
-
-    Args:
-        event: API Gateway イベント
+    質問からクエリタイプを判定
 
     Returns:
-        Cognito User ID (sub)
-
-    Raises:
-        Exception: User ID が取得できない場合
-    """
-    try:
-        # API Gateway Cognito Authorizer から取得
-        claims = event['requestContext']['authorizer']['claims']
-        user_id = claims['sub']
-        return user_id
-    except (KeyError, TypeError) as e:
-        raise Exception(f"Failed to get user ID from event: {str(e)}")
-
-
-def select_query(question: str, user_id: str) -> str:
-    """
-    質問内容からクエリを選択（キーワードマッチング）
-
-    Args:
-        question: ユーザーの質問
-        user_id: Cognito User ID
-
-    Returns:
-        SQL クエリ文字列
+        クエリタイプ名（該当なしの場合はNone → RAG使用）
     """
     question_lower = question.lower()
 
-    # サンプルクエリを取得
+    for query_type, keywords in QUERY_KEYWORDS.items():
+        if any(kw in question_lower for kw in keywords):
+            return query_type
+
+    return None  # RAG使用
+
+
+def handle_athena_query(
+    question: str, user_id: str, query_type: str, bedrock_client: BedrockClient
+) -> Tuple[str, int]:
+    """Athenaテンプレートで処理"""
+    print(f"Using Athena template: {query_type}")
+
+    athena_client = AthenaClient(
+        database=ATHENA_DATABASE,
+        output_location=ATHENA_OUTPUT_LOCATION,
+        workgroup=ATHENA_WORKGROUP,
+        region=AWS_REGION,
+    )
+
     queries = get_sample_queries(user_id)
+    query = queries.get(query_type, queries["recent_history"])
 
-    # キーワードマッチング
-    if any(keyword in question_lower for keyword in ['most watched', '最も見', '一番見', 'よく見', 'top', 'チャンネル']):
-        return queries['most_watched_channels']
+    data = athena_client.execute_query(query, use_cache=True, timeout=25)
+    print(f"Athena returned {len(data)} rows")
 
-    elif any(keyword in question_lower for keyword in ['total', '合計', '全部', '何本', '何件', 'how many']):
-        return queries['total_videos']
+    answer = bedrock_client.analyze_youtube_data(question=question, data=data)
 
-    elif any(keyword in question_lower for keyword in ['recent', '最近', '直近', 'latest']):
-        return queries['recent_history']
+    return answer, len(data)
 
-    elif any(keyword in question_lower for keyword in ['daily', '毎日', '日別', '推移']):
-        return queries['daily_watch_count']
 
-    else:
-        # デフォルト: 最近の履歴を返す
-        print("No keyword match, using default query (recent history)")
-        return queries['recent_history']
+def handle_rag_query(
+    question: str, user_id: str, bedrock_client: BedrockClient
+) -> Tuple[str, int]:
+    """RAG検索で処理"""
+    print("Using RAG search")
+
+    if not VECTORS_BUCKET:
+        # RAGが設定されていない場合はフォールバック
+        print("VECTORS_BUCKET not set, falling back to recent history")
+        return handle_athena_query(question, user_id, "recent_history", bedrock_client)
+
+    rag_client = RAGClient(vectors_bucket=VECTORS_BUCKET, region=AWS_REGION)
+
+    results = rag_client.search(query=question, user_id=user_id, top_k=20)
+
+    if not results:
+        print("No RAG results, falling back to recent history")
+        return handle_athena_query(question, user_id, "recent_history", bedrock_client)
+
+    # RAG結果をテキスト化
+    context = format_rag_results(results)
+
+    # Bedrockで回答生成
+    answer = bedrock_client.chat(
+        message=f"以下のYouTube視聴履歴データを参考に、質問に回答してください。\n\n{context}\n\n質問: {question}",
+        system_prompt="あなたはYouTube視聴履歴の分析アシスタントです。提供されたデータに基づいて、ユーザーの質問に日本語で回答してください。",
+    )
+
+    return answer, len(results)
+
+
+def get_user_id(event: Dict[str, Any]) -> str:
+    """API Gateway イベントから Cognito User ID を取得"""
+    try:
+        claims = event["requestContext"]["authorizer"]["claims"]
+        return claims["sub"]
+    except (KeyError, TypeError) as e:
+        raise Exception(f"Failed to get user ID from event: {str(e)}")

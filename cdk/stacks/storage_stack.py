@@ -59,6 +59,7 @@ class StorageStack(Stack):
             enforce_ssl=True,
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
+            event_bridge_enabled=True,  # Vectorize Lambda トリガー用
             lifecycle_rules=[
                 s3.LifecycleRule(
                     id="DeleteAfter2Days",

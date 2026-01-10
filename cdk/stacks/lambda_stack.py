@@ -1,15 +1,11 @@
-from aws_cdk import (
-    Stack,
-    RemovalPolicy,
-    aws_lambda as lambda_,
-    aws_iam as iam,
-    aws_s3 as s3,
-    aws_glue as glue,
-    aws_events as events,
-    aws_events_targets as targets,
-    aws_logs as logs,
-    Duration,
-)
+from aws_cdk import Duration, RemovalPolicy, Stack
+from aws_cdk import aws_events as events
+from aws_cdk import aws_events_targets as targets
+from aws_cdk import aws_glue as glue
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_lambda as lambda_
+from aws_cdk import aws_logs as logs
+from aws_cdk import aws_s3 as s3
 from constructs import Construct
 
 
@@ -31,7 +27,7 @@ class LambdaStack(Stack):
         glue_job: glue.CfnJob,
         database_name: str,
         workgroup_name: str,
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -121,11 +117,12 @@ class LambdaStack(Stack):
             code=lambda_.Code.from_asset("../lambdas/chat_api"),
             layers=[self.shared_layer],
             timeout=Duration.seconds(29),  # API Gateway制限
-            memory_size=512,
+            memory_size=1024,
             environment={
                 "ATHENA_DATABASE": database_name,
                 "ATHENA_WORKGROUP": workgroup_name,
                 "ATHENA_OUTPUT_LOCATION": f"s3://{athena_results_bucket.bucket_name}/results/",
+                "VECTORS_BUCKET": processed_bucket.bucket_name,
             },
             description="Chat API with Athena and Bedrock integration",
             log_group=chat_api_log_group,
@@ -167,15 +164,16 @@ class LambdaStack(Stack):
         processed_bucket.grant_read(self.chat_api_function)
         athena_results_bucket.grant_read_write(self.chat_api_function)
 
-        # Bedrock呼び出し権限（ap-northeast-1でClaude 3.5 Sonnet利用可能）
+        # Bedrock呼び出し権限（Claude 3.5 Sonnet + Titan Embeddings）
         self.chat_api_function.add_to_role_policy(
             iam.PolicyStatement(
                 actions=[
                     "bedrock:InvokeModel",
-                    "bedrock:InvokeModelWithResponseStream"
+                    "bedrock:InvokeModelWithResponseStream",
                 ],
                 resources=[
-                    f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
+                    f"arn:aws:bedrock:{self.region}::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0",
+                    f"arn:aws:bedrock:{self.region}::foundation-model/amazon.titan-embed-text-v1",
                 ],
             )
         )
@@ -185,7 +183,7 @@ class LambdaStack(Stack):
             iam.PolicyStatement(
                 actions=[
                     "aws-marketplace:ViewSubscriptions",
-                    "aws-marketplace:Subscribe"
+                    "aws-marketplace:Subscribe",
                 ],
                 resources=["*"],
             )
@@ -220,3 +218,67 @@ class LambdaStack(Stack):
 
         # S3書き込み権限
         raw_bucket.grant_put(self.upload_presigned_function)
+
+        # 4. Vectorize Lambda関数（RAG用ベクトル化）
+        vectorize_log_group = logs.LogGroup(
+            self,
+            "VectorizeLogGroup",
+            log_group_name="/aws/lambda/youtube-analytics-vectorize",
+            removal_policy=RemovalPolicy.DESTROY,
+            retention=logs.RetentionDays.ONE_WEEK,
+        )
+
+        # AWS SDK for pandas Layer（pandas, pyarrow含む）
+        pandas_layer = lambda_.LayerVersion.from_layer_version_arn(
+            self,
+            "PandasLayer",
+            f"arn:aws:lambda:{self.region}:336392948345:layer:AWSSDKPandas-Python311:19",
+        )
+
+        self.vectorize_function = lambda_.Function(
+            self,
+            "VectorizeFunction",
+            function_name="youtube-analytics-vectorize",
+            runtime=lambda_.Runtime.PYTHON_3_11,
+            handler="handler.lambda_handler",
+            code=lambda_.Code.from_asset("../lambdas/vectorize"),
+            layers=[self.shared_layer, pandas_layer],
+            timeout=Duration.minutes(10),  # 4000件ベクトル化対応
+            memory_size=1024,
+            environment={
+                "VECTORS_BUCKET": processed_bucket.bucket_name,
+            },
+            description="Vectorize YouTube history for RAG",
+            log_group=vectorize_log_group,
+        )
+
+        # S3読み書き権限
+        processed_bucket.grant_read_write(self.vectorize_function)
+
+        # Bedrock Embeddings権限
+        self.vectorize_function.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"],
+                resources=[
+                    f"arn:aws:bedrock:{self.region}::foundation-model/amazon.titan-embed-text-v1"
+                ],
+            )
+        )
+
+        # EventBridgeルールでParquet作成をトリガー
+        parquet_event_rule = events.Rule(
+            self,
+            "ParquetCreatedRule",
+            description="Trigger vectorize when Parquet is created",
+            event_pattern=events.EventPattern(
+                source=["aws.s3"],
+                detail_type=["Object Created"],
+                detail={
+                    "bucket": {"name": [processed_bucket.bucket_name]},
+                    "object": {
+                        "key": [{"prefix": "processed/"}, {"suffix": ".parquet"}]
+                    },
+                },
+            ),
+        )
+        parquet_event_rule.add_target(targets.LambdaFunction(self.vectorize_function))
