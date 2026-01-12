@@ -137,6 +137,41 @@ export default function FileUploader() {
         </ol>
       </div>
 
+      {/* デモデータダウンロードセクション */}
+      <div className="mb-6 p-4 bg-indigo-50 rounded-md border border-indigo-100">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-medium text-indigo-800">
+              デモ用サンプルデータ
+            </h3>
+            <p className="text-sm text-indigo-600 mt-1">
+              YouTube履歴のサンプルJSONファイルをダウンロードできます
+            </p>
+          </div>
+          <a
+            href="/youtube-history-sample.json"
+            download="youtube-history-sample.json"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+          >
+            <svg
+              className="mr-2 h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            ダウンロード
+          </a>
+        </div>
+      </div>
+
       <form onSubmit={handleUpload} className="space-y-4">
         <div>
           <label
@@ -240,6 +275,9 @@ export default function FileUploader() {
       <div className="mt-6 p-4 bg-gray-50 rounded-md">
         <h3 className="text-sm font-medium text-gray-700 mb-2">注意事項</h3>
         <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+          <li>
+            データは開発者のAWS環境で処理されます。個人情報の取り扱いにご注意ください
+          </li>
           <li>JSON配列形式のファイルのみアップロード可能です</li>
           <li>アップロードされたデータは2日後に自動削除されます</li>
           <li>データはユーザーごとに完全に分離されています</li>
