@@ -24,6 +24,7 @@ class ApiGatewayStack(Stack):
         user_pool: cognito.IUserPool,
         chat_api_function: lambda_.IFunction,
         upload_presigned_function: lambda_.IFunction,
+        check_data_status_function: lambda_.IFunction,
         **kwargs
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -111,6 +112,35 @@ class ApiGatewayStack(Stack):
         upload_resource.add_method(
             "POST",
             upload_integration,
+            authorizer=self.authorizer,
+            authorization_type=apigw.AuthorizationType.COGNITO,
+            method_responses=[
+                apigw.MethodResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": True,
+                    },
+                )
+            ],
+        )
+
+        # /data-status エンドポイント（データ存在チェック）
+        data_status_resource = self.api.root.add_resource("data-status")
+        data_status_integration = apigw.LambdaIntegration(
+            check_data_status_function,
+            proxy=True,
+            integration_responses=[
+                apigw.IntegrationResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": "'*'",
+                    },
+                )
+            ],
+        )
+        data_status_resource.add_method(
+            "GET",
+            data_status_integration,
             authorizer=self.authorizer,
             authorization_type=apigw.AuthorizationType.COGNITO,
             method_responses=[

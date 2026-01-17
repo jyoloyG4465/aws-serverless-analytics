@@ -9,6 +9,7 @@ import type {
   ChatRequest,
   ChatResponse,
   ErrorResponse,
+  DataStatusResponse,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -87,5 +88,25 @@ export async function sendChatMessage(question: string): Promise<ChatResponse> {
       throw new Error(errorData.error || "メッセージ送信に失敗しました");
     }
     throw new Error("メッセージ送信に失敗しました");
+  }
+}
+
+/**
+ * ユーザーのデータ存在状況をチェック
+ */
+export async function checkDataStatus(): Promise<DataStatusResponse> {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await axios.get<DataStatusResponse>(
+      `${API_URL}/data-status`,
+      { headers }
+    );
+    return response.data;
+  } catch (error) {
+    if (error instanceof AxiosError && error.response) {
+      const errorData = error.response.data as ErrorResponse;
+      throw new Error(errorData.error || "データステータスの取得に失敗しました");
+    }
+    throw new Error("データステータスの取得に失敗しました");
   }
 }

@@ -78,6 +78,7 @@ api_gateway_stack = ApiGatewayStack(
     user_pool=cognito_stack.user_pool,
     chat_api_function=lambda_stack.chat_api_function,
     upload_presigned_function=lambda_stack.upload_presigned_function,
+    check_data_status_function=lambda_stack.check_data_status_function,
     env=env,
     description="API Gateway with Cognito authentication"
 )

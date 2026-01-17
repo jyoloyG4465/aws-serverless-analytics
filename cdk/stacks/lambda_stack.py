@@ -282,3 +282,32 @@ class LambdaStack(Stack):
             ),
         )
         parquet_event_rule.add_target(targets.LambdaFunction(self.vectorize_function))
+
+        # 5. Check Data Status Lambda関数
+        check_data_status_log_group = logs.LogGroup(
+            self,
+            "CheckDataStatusLogGroup",
+            log_group_name="/aws/lambda/youtube-analytics-check-data-status",
+            removal_policy=RemovalPolicy.DESTROY,
+            retention=logs.RetentionDays.ONE_WEEK,
+        )
+
+        self.check_data_status_function = lambda_.Function(
+            self,
+            "CheckDataStatusFunction",
+            function_name="youtube-analytics-check-data-status",
+            runtime=lambda_.Runtime.PYTHON_3_11,
+            handler="handler.lambda_handler",
+            code=lambda_.Code.from_asset("../lambdas/check_data_status"),
+            layers=[self.shared_layer],
+            timeout=Duration.seconds(10),
+            memory_size=128,
+            environment={
+                "VECTORS_BUCKET": processed_bucket.bucket_name,
+            },
+            description="Check if user's vector data exists in S3",
+            log_group=check_data_status_log_group,
+        )
+
+        # S3読み取り権限（head_objectに必要）
+        processed_bucket.grant_read(self.check_data_status_function)

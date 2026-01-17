@@ -92,6 +92,15 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto">
+      {/* 過去データの注意書き */}
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-700">
+          <span className="font-medium">注意:</span>{" "}
+          分析結果は最後にアップロードしたデータに基づいています。
+          新しいデータをアップロードした場合は、数分後に反映されます。
+        </p>
+      </div>
+
       <ChatHeader
         showClearButton={messages.length > 0}
         onClear={handleClear}

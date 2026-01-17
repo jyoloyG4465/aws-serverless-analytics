@@ -41,3 +41,9 @@ export interface ErrorResponse {
   error: string;
   details?: string;
 }
+
+// データステータス関連
+export interface DataStatusResponse {
+  hasData: boolean;
+  message: string;
+}
