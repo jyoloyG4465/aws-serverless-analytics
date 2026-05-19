@@ -14,22 +14,17 @@ import {
 } from "aws-amplify/auth";
 
 // Amplify設定
-Amplify.configure(
-  {
-    Auth: {
-      Cognito: {
-        userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || "",
-        userPoolClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || "",
-        loginWith: {
-          email: true,
-        },
+Amplify.configure({
+  Auth: {
+    Cognito: {
+      userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || "",
+      userPoolClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || "",
+      loginWith: {
+        email: true,
       },
     },
   },
-  {
-    ssr: true, // Server-Side Rendering対応
-  }
-);
+});
 
 /**
  * ログイン
