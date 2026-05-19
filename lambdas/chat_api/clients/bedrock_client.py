@@ -19,7 +19,7 @@ class BedrockClient:
     def __init__(
         self,
         region: str = "ap-northeast-1",
-        model_id: str = "anthropic.claude-3-5-sonnet-20240620-v1:0",
+        model_id: str = "jp.anthropic.claude-sonnet-4-6",
         max_tokens: int = 2000,
         temperature: float = 0.7,
     ):

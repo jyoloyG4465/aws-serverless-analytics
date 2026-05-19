@@ -19,8 +19,8 @@ s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime", region_name="ap-northeast-1")
 
 # Titan Embeddings モデル
-EMBEDDING_MODEL_ID = "amazon.titan-embed-text-v1"
-EMBEDDING_DIMENSION = 1536
+EMBEDDING_MODEL_ID = "amazon.titan-embed-text-v2:0"
+EMBEDDING_DIMENSION = 1024
 
 # ランダムサンプリング上限（Lambda メモリ・タイムアウト対策）
 MAX_RECORDS = 4000

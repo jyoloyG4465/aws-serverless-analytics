@@ -15,8 +15,8 @@ from typing import List, Dict, Any, Optional
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime", region_name="ap-northeast-1")
 
-EMBEDDING_MODEL_ID = "amazon.titan-embed-text-v1"
-EMBEDDING_DIMENSION = 1536
+EMBEDDING_MODEL_ID = "amazon.titan-embed-text-v2:0"
+EMBEDDING_DIMENSION = 1024
 
 
 class RAGClient:

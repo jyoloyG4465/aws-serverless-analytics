@@ -15,7 +15,7 @@ interface Message {
 /**
  * チャットインターフェース
  *
- * Bedrock (Claude 3.5 Sonnet) を使った YouTube 閲覧履歴の AI 分析
+ * Bedrock (Claude Sonnet 4) を使った YouTube 閲覧履歴の AI 分析
  */
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);

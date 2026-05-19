@@ -14,7 +14,7 @@ export default function ChatDescription() {
             <p>
               アップロードしたYouTube閲覧履歴データについて、AIに質問できます。
             </p>
-            <p>Claude 3.5 Sonnetが、あなたの視聴履歴を分析して回答します。</p>
+            <p>Claude Sonnet 4が、あなたの視聴履歴を分析して回答します。</p>
             <p className="text-gray-500">
               注意：データがアップロードされていない場合は、まず
               <Link href="/" className="text-blue-600 hover:underline">
